@@ -35,19 +35,19 @@ run
 
 Command for training/testing CPGAN. Nota the excuting testing command only get the utility accuracy. 
 
-##Cifar10
+## Cifar10
 ```
 Ubuntu : bash cifar10_run.sh 
 Python L python main_cifar10.py --train True 
 ```
 
-##SVHN
+## SVHN
 ```
 Ubuntu : bash svhn_run.sh $1 $2 $3
 Python L python main_wrs.py --train True 
 ```
 
-##Single CelebA
+## Single CelebA
 
 $1 : path to the images of the dataset
 $2 : path to the lables of the dataset
@@ -58,7 +58,7 @@ Ubuntu : bash single_celeba_run.sh $1 $2 $3 $4
 Windows : python L python main_celeba.py --train True 
 ```
 
-##Multi CelebA
+## Multi CelebA
 $1 : path to the images of the dataset
 $2 : path to the lables of the dataset
 $2 : True (If training phase)
@@ -72,19 +72,19 @@ Windows : Python L python main_muti.py --train True
 
 Excuting command of the script in different experiments for both training and testing:
 
-##Cifar10
+## Cifar10
 ```
 Ubuntu : bash cifar10_reco_run.sh 
 Python L python main_cifar10_reco.py --train True 
 ```
 
-##SVHN
+## SVHN
 ```
 Ubuntu : bash svhn_reco_run.sh $1 $2 $3
 Python L python main_wrs_reco.py --train True 
 ```
 
-##Single CelebA
+## Single CelebA
 
 $1 : path to the images of the dataset
 $2 : path to the lables of the dataset
@@ -95,7 +95,7 @@ Ubuntu : bash single_celeba_reco_run.sh $1 $2 $3 $4
 Windows : python L python main_reco.py --train True 
 ```
 
-##Multi CelebA
+## Multi CelebA
 $1 : path to the images of the dataset
 $2 : path to the lables of the dataset
 $2 : True (If training phase)
@@ -114,21 +114,21 @@ Explain what these tests test and why
 Give an example
 ```
 
-## Original Paper
+## **Original Paper**
 
 Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
 
 
-## Authors
+## **Authors**
 
 * **Bo-wei Tseng** - *NTU* - [PurpleBooth](https://github.com/R06942098)
 
 
-## License
+## **License**
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 
-## Acknowledgments
+## **Acknowledgments**
 
 * My advisor : Pei-yuan Wu (Assistant Professor, NTU)
 * Facenet : https://github.com/davidsandberg/facenet
