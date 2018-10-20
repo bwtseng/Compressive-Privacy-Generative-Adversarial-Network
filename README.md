@@ -1,6 +1,8 @@
-# Compressive Privacy Generative Adversarial Networks
+# Compressive Privacy Generative Adversarial Networks(Abstract)
 
 Machine learning has become more and more important in our life recent years and has also been applied to many cloud application. If a local user wants to use the face recognition system, she just needs to upload her private facial image to the cloud, and cloud server will give the recognition results that she is Alice. However, this raises a problem that the adversary in the cloud can intrude Alice's image since there is no privacy preserving mechanism applied to this system. In order to solve this urgent issue, we propose the compressive privacy generative adversarial network which is a local encryption scheme to prevent the private data of each user from being exposed in the cloud. With our proposed CPGAN, cloud only receive the compressive data and use them to do other machine learning task; we confirm that our CPGAN can get the quite accuracy compared with the state-of-the-art method over recent three years even use these compressive data, and it also persists certain reconstruction attack launched by malicious attacker. In short, our proposed CPGAN aims to minimize the trade off between privacy and utility, in other words, our target is to find the optimal neural network with hight utility gain but low privacy cost. 
+
+Including all ihe implentation python/bash script and reference in this CPGAN reco.
 
 ## Dataset
 
@@ -21,6 +23,13 @@ Numpy == 1.15
 Scipy == 1.15
 Matplotlib == 1.15
 ```
+
+### Preprocessing of CelebA dataset
+Thank [FaceNet](https://github.com/davidsandberg/facenet) for the best MTCNN aligned open source code.
+```
+run 
+```
+
 
 ### Execution for training/testing (Utility)
 
@@ -105,7 +114,7 @@ Explain what these tests test and why
 Give an example
 ```
 
-## Contributing
+## Original Paper
 
 Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
 
