@@ -4,13 +4,13 @@ Machine learning has become more and more important in our life recent years and
 
 Including all ihe implentation python/bash script and reference in this CPGAN reco.
 
-### Dataset
+### **Dataset**
 
 * [CIFAR-10](https://www.cs.toronto.edu/~kriz/cifar.html) - Avaible on the Internet
 * [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) - Avaible on the Internet
 * [SVHN](http://ufldl.stanford.edu/housenumbers/) - Avaible on the Internet
 
-### Prerequisites
+### **Prerequisites**
 Our code is not limited to the version of thers packages bsides the tensoflow. We just
 
 list the version of the packages installed in our server as follow: 
@@ -24,14 +24,14 @@ Scipy == 1.15
 Matplotlib == 1.15
 ```
 
-### Preprocessing of CelebA dataset
+### **Preprocessing of CelebA dataset**
 Thank [FaceNet](https://github.com/davidsandberg/facenet) for the best MTCNN aligned open source code.
 ```
 run 
 ```
 
 
-### Execution for training/testing (Utility)
+### **Execution for training/testing (Utility)**
 
 Command for training/testing CPGAN. Nota the excuting testing command only get the utility accuracy. 
 
@@ -68,7 +68,7 @@ Ubuntu : bash multi_celeba_run.sh $1 $2 $3 $4
 Windows : Python L python main_muti.py --train True 
 ```
 
-### Execution for training/testing (Privacy)
+### **Execution for training/testing (Privacy)**
 
 Excuting command of the script in different experiments for both training and testing:
 
@@ -106,7 +106,7 @@ Windows : Python L python main_multi_reco.py --train True
 ```
 
 
-### Experiments for the optimal Reconstructor 
+### **Experiments for the optimal Reconstructor**
 
 Explain what these tests test and why
 
