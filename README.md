@@ -1,5 +1,5 @@
 # Compressive Privacy Generative Adversarial Networks
-##Abstract
+## **Abstract**
 Machine learning has become more and more important in our life recent years and has also been applied to many cloud application. If a local user wants to use the face recognition system, she just needs to upload her private facial image to the cloud, and cloud server will give the recognition results that she is Alice. However, this raises a problem that the adversary in the cloud can intrude Alice's image since there is no privacy preserving mechanism applied to this system. In order to solve this urgent issue, we propose the compressive privacy generative adversarial network which is a local encryption scheme to prevent the private data of each user from being exposed in the cloud. With our proposed CPGAN, cloud only receive the compressive data and use them to do other machine learning task; we confirm that our CPGAN can get the quite accuracy compared with the state-of-the-art method over recent three years even use these compressive data, and it also persists certain reconstruction attack launched by malicious attacker. In short, our proposed CPGAN aims to minimize the trade off between privacy and utility, in other words, our target is to find the optimal neural network with hight utility gain but low privacy cost. 
 
 Including all ihe implentation python/bash script and reference in this CPGAN reco.
@@ -62,6 +62,13 @@ Windows : python main_wrs.py --test True  (Testing)
 ```
 
 ## Single CelebA
+```bash
+├── dataset
+    ├── 000001.png
+    ├── 000002.png
+    ├── XXXXXX.png  
+    └── 202599.png
+```
 
 $1 : path to the images of the dataset
 $2 : path to the lables of the dataset
@@ -111,7 +118,13 @@ Windows : python main_wrs_reco.py --test True (Testing, only plot the training l
 ```
 
 ## Single CelebA
-
+```bash
+├── dataset
+    ├── 000001.png
+    ├── 000002.png
+    ├── XXXXXX.png  
+    └── 202599.png
+```
 $1 : path to the images of the dataset
 $2 : path to the lables of the dataset
 $2 : True (If training phase)
