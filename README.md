@@ -75,8 +75,10 @@ $2 : path to the lables of the dataset
 $2 : True (If training phase)
 $3 : False (If testing phase)
 ```
+At first, make a directory single_celebA (e.g mkdir single_celebA in ubuntu)
 Ubuntu : bash single_celeba_run.sh $1 $2 $3 $4
-Windows : python L python main_celeba.py --train True 
+Windows : python main_celeba.py --train True  --attritube Male --path dataset_path 
+Windows : python main_celeba.py --test True --model_path your_path
 ```
 
 ## Multi CelebA
@@ -85,8 +87,10 @@ $2 : path to the lables of the dataset
 $2 : True (If training phase)
 $3 : False (If testing phase)
 ```
+At first, make a directory single_celebA (e.g mkdir single_celebA in ubuntu)
 Ubuntu : bash multi_celeba_run.sh $1 $2 $3 $4
-Windows : Python L python main_muti.py --train True 
+Windows : python main_mutli.py --train True --path dataset_path (training)
+Windows : python main_multi.py --test True --path dataset_path --model_path your_path (testing)
 ```
 
 ### **Execution for training/testing (Privacy)**
@@ -130,8 +134,10 @@ $2 : path to the lables of the dataset
 $2 : True (If training phase)
 $3 : False (If testing phase)
 ```
+At first, make a directory single_celebA (e.g mkdir single_celebA in ubuntu)
 Ubuntu : bash single_celeba_reco_run.sh $1 $2 $3 $4
-Windows : python L python main_reco.py --train True 
+Windows : python main_reco.py --train True --path dataset_path (Training)
+Windows : python main_reco.py --test True --path dataset_path --model_path model_path (Testing) 
 ```
 
 ## Multi CelebA
@@ -141,7 +147,8 @@ $2 : True (If training phase)
 $3 : False (If testing phase)
 ```
 Ubuntu : bash multi_celeba_reco_run.sh $1 $2 $3 $4
-Windows : Python L python main_multi_reco.py --train True 
+Windows : python main_multi_reco.py --train True --path dataset_path (Training)
+Windows : python main_multi_reco.py --test True  --path dataset_path --model_path model_path (Testing)
 ```
 
 
