@@ -37,14 +37,26 @@ Command for training/testing CPGAN. Nota the excuting testing command only get t
 
 ## Cifar10
 ```
-Ubuntu : bash cifar10_run.sh 
-Python L python main_cifar10.py --train True 
+At first, make a directory cifar10_log (e.g mkdir cifar10_log in ubuntu)
+Ubuntu : bash cifar10_run.sh $ $ $ $
+Windows : python main_cifar10.py --train True (Training)
+
+Ubuntu : bash cifar10_run.sh $ $ $ $
+Windows: python main_cifar10.py --test True --model_path your_path/to/cifar_log/model_checkpoint(Training)
 ```
 
 ## SVHN
+Please set the directory of the SVHN as follow:
+├── svhn
+    ├── train_32x32.mat
+    ├── test_32x32.mat
+    └── extra_32x32.mat
+
 ```
+At first, make a directory svhn_log (e.g mkdir svhn_log in ubuntu)
 Ubuntu : bash svhn_run.sh $1 $2 $3
-Python L python main_wrs.py --train True 
+Windows : python main_wrs.py --train True (Training)
+Windows : python main_wrs.py --test True  (Testing)
 ```
 
 ## Single CelebA
@@ -74,14 +86,22 @@ Excuting command of the script in different experiments for both training and te
 
 ## Cifar10
 ```
+At first, make a directory cpgan_log (e.g mkdir cpgan_log in ubuntu)
 Ubuntu : bash cifar10_reco_run.sh 
-Python L python main_cifar10_reco.py --train True 
+Windows : python main_cifar10_reco.py --train True (Training)
+Windows : python main_cifar10_reco.py --test True (Testing, only plot the training losss curve)
 ```
 
 ## SVHN
+Please set the directory of the SVHN as follow:
+├── svhn
+    ├── train_32x32.mat
+    ├── test_32x32.mat
+    └── extra_32x32.mat
 ```
 Ubuntu : bash svhn_reco_run.sh $1 $2 $3
-Python L python main_wrs_reco.py --train True 
+Windows : python main_wrs_reco.py --train True (Training)
+Windows : python main_wrs_reco.py --test True (Testing, only plot the training losss curve )
 ```
 
 ## Single CelebA
