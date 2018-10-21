@@ -47,10 +47,12 @@ Windows: python main_cifar10.py --test True --model_path your_path/to/cifar_log/
 
 ## SVHN
 Please set the directory of the SVHN as follow:
+```bash
 ├── svhn
     ├── train_32x32.mat
     ├── test_32x32.mat
     └── extra_32x32.mat
+```
 
 ```
 At first, make a directory svhn_log (e.g mkdir svhn_log in ubuntu)
@@ -94,10 +96,14 @@ Windows : python main_cifar10_reco.py --test True (Testing, only plot the traini
 
 ## SVHN
 Please set the directory of the SVHN as follow:
+```bash
 ├── svhn
     ├── train_32x32.mat
     ├── test_32x32.mat
     └── extra_32x32.mat
+```
+
+
 ```
 Ubuntu : bash svhn_reco_run.sh $1 $2 $3
 Windows : python main_wrs_reco.py --train True (Training)
