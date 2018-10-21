@@ -14,17 +14,12 @@ from scipy.misc import imrotate ,imread ,imsave,imresize
 from keras.datasets import cifar10
 from sklearn.metrics import accuracy_score
 from sklearn.decomposition import PCA
+from sklearn.metrics import mean_squared_error
 import data as dataset
-
-tf.set_random_seed(9)
-np.random.seed(9)
 
 plt.switch_backend('agg')
 class shakenet:
     def __init__(self,arg):
-
-        tf.set_random_seed(9)
-        np.random.seed(9)
 
         self.arg = arg
 
@@ -32,62 +27,44 @@ class shakenet:
 
         self.init_learning_rate = 0.2
 
-        self.num_epochs = 1800
-
-        #self.num_epochs = 
-
-        #self.t_data ,self.t_label ,self.te_data ,self.te_label = self.load_data()
+        self.num_epochs = 15000
 
         self.train_set , self.val_set = self.load_data()
-        
+
         self.build_model()
 
-        #self.acc = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(self.prob,1),tf.argmax(self.label_p,1)),tf.float32))
-        self.acc = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(self.prob,1),tf.argmax(self.label_p,1)),tf.float32))
-
-        utility_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.label_p,logits=self.logit))
-        #utility_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.one_hot, logits=self.logit))
-
         self.loss_r = tf.losses.mean_squared_error(self.image_p,self.up) 
-
-        self.loss_g = utility_loss - tf.losses.mean_squared_error(self.image_p,self.up) 
 
         self.theta_r = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='reconstructor')
 
         self.theta_g = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='compressor')
 
-        self.theta_c_up = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='utility_classifier/decoder')
-
-        self.theta_c = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='utility_classifier/classifier')
-
-        l2_reg_loss = tf.add_n([tf.nn.l2_loss(var) for var in self.theta_c])
-
-        self.loss_c = utility_loss + 0.0001 * l2_reg_loss
-
         uti_update = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(uti_update):
-            #self.g_op = tf.train.MomentumOptimizer(self.learning_rate_p, 0.9, use_nesterov=True)
-            #self.g_opt = self.g_op.minimize(self.loss_g,var_list=self.theta_g)
-            self.g_op = tf.train.AdamOptimizer(0.001)
-            self.g_opt = self.g_op.minimize(self.loss_g, var_list=self.theta_g)
-
-            ### small server's learning rate may be 0.001 or 0.01
-
-            #self.r_op = tf.train.MomentumOptimizer(self.learning_rate_p, 0.9, use_nesterov=True)
-            #self.r_opt = self.r_op.minimize(self.loss_r,var_list=self.theta_r)  
-            self.r_op = tf.train.AdamOptimizer(0.001)
-            self.r_opt = self.r_op.minimize(self.loss_r, var_list=self.theta_r)
-
-            self.c_op = tf.train.MomentumOptimizer(self.learning_rate_p, 0.9, use_nesterov=True)
-            self.c_opt = self.c_op.minimize(self.loss_c,var_list = self.theta_c+self.theta_c_up)
-
+            self.r_op = tf.train.MomentumOptimizer(self.learning_rate_p,0.9, use_nesterov=True)
+            self.r_opt = self.r_op.minimize(self.loss_r,var_list=self.theta_r)
+            #self.r_op = tf.train.AdamOptimizer(0.001)
+            #self.r_opt = self.r_op.minimize(self.loss_r,var_list=self.theta_r)         
         self.sess = tf.Session()
 
         self.sess.run(tf.global_variables_initializer())
 
-        self.saver = tf.train.Saver(max_to_keep=5)
+        self.saver = tf.train.Saver(max_to_keep=15)
 
-        self.assign_op = [] 
+        self.assign_op = []
+        
+        #a = np.load('/home/pywu/bowei/cifar10/cpgan_log/theta_g.npy')
+        
+        a = np.load(self.arg.weight_path)
+
+        for i in range(len(self.theta_g)):
+            if a[i].shape[0] > 3 :
+                self.assign_op.append(tf.assign(self.theta_g[i],a[i].reshape(3,3,3,3)))
+            else : 
+                self.assign_op.append(tf.assign(self.theta_g[i],a[i]))
+
+        print('Length of all parameters in utility_classifier should be assigned:{}'.format(len(self.assign_op)))
+        
 
     def preprocess(self,data):
         a=[]
@@ -96,13 +73,41 @@ class shakenet:
             temp = (temp/127.5)-1
             a.append(temp)
         return a
+    '''
+    def load_data(self):
 
+        (t_data,t_label),(te_data,te_label) = cifar10.load_data()
+
+        #t_label_oh = np.zeros((len(t_label),10)
+
+        t_label = t_label.reshape(-1)
+        te_label = te_label.reshape(-1)
+
+        t_data = t_data /255.0
+        te_data = te_data /255.0
+
+        #t_data = (t_data/127.5)-1
+        #te_data = (te_data/127.5)-1
+        
+        cifar_mean = np.array([0.4914,0.4822,0.4465])
+        cifar_std = np.array([0.2470,0.2435,0.2616])
+
+        for i in range(len(t_data)):
+            t_data[i] -= cifar_mean
+            t_data[i] /= cifar_std
+
+        #print(t_data)
+        for i in range(len(te_data)):
+            te_data[i] -= cifar_mean
+            te_data[i] /= cifar_std 
+
+        return t_data , t_label ,te_data ,te_label
+    '''
     def load_data(self):
         t_data,te_data,t_label,te_label = dataset.read_CIFAR10_subset()
         train_set = dataset.DataSet(t_data,t_label)
         test_set = dataset.DataSet(te_data,te_label)
         return train_set , test_set
-        
 
     def _conv(self, input, filter_shape, stride):
         """Convolutional layer"""
@@ -114,7 +119,6 @@ class shakenet:
     def _residual_unit(self, input_, in_filters, out_filters, stride, option=0):
         """
         Residual unit with 2 sub-layers
-
         When in_filters != out_filters:
         option 0: zero padding
         """
@@ -130,10 +134,8 @@ class shakenet:
         if in_filters != out_filters:
             if option == 0:
                 difference = out_filters - in_filters
-                left_pad = int(difference / 2)
-                right_pad = int(difference - left_pad)
-                print(left_pad)
-                print(right_pad)
+                left_pad = difference / 2
+                right_pad = difference - left_pad
                 identity = tf.pad(input_, [[0, 0], [0, 0], [0, 0], [left_pad, right_pad]])
                 return x + identity
             else:
@@ -143,40 +145,33 @@ class shakenet:
             return x + input_
 
     def init_tensor(self, shape):
-
         return tf.Variable(tf.truncated_normal(shape, mean=0.0, stddev=1.0))
 
     def build_model(self):
 
         self.image_p = tf.placeholder(tf.float32,shape=[None,32,32,3])
+
         self.label_p = tf.placeholder(tf.int64,shape=[None,10])
-        #self.label_p = tf.placeholder(tf.int64, shape=[None])
+
         self.is_train = tf.placeholder(tf.bool)
+
         self.learning_rate_p = tf.placeholder(tf.float32)
+
         self.noise_p = tf.placeholder(tf.float32,shape=[None,32,32,3])
+
         #self.latent = self.generator_conv(self.image_p)
-
-        #self.noisy_img = tf.add(self.image_p, self.noise_p)
-
-        self.latent = self.residual_g(self.image_p)
-
-        #self.latent = self.residual_g(self.noisy_img)
-
+        #self.latent = self.residual_g(self.image_p)
         ### if R is idenetity ?? 
         #self.up = self.decoder_conv(self.latent)
 
-        #self.logit = self.utility_classifier(self.image_p, 10)
+        #self.logit = self.utility_classifier(self.image_p,10)
 
+        #self.noisy_img = tf.add(self.image_p, self.noise_p)
+        self.latent = self.residual_g(self.image_p)
+        #self.latent = self.residual_g(self.noisy_img)
+        #self.latent = self.generator_conv(self.image_p)
         self.up = self.decoder_conv(self.latent)
-
-        self.logit = self.utility_classifier(self.latent,10)
-
-        self.prob = tf.nn.softmax(self.logit)
-
-        #self.one_hot = tf.one_hot(self.label_p,10)
-
-        #print(self.latent)
-        #print(self.up)
+        #self.up = self.decoder_conv(self.image_p)
 
     def bo_batch_norm(self,x, is_training, momentum=0.9, epsilon=0.00001):
         """
@@ -191,33 +186,25 @@ class shakenet:
     def residual_g(self,image,reuse=False):
         stride = [1,1,1]
         filter_size = [3,3,3]
-        #stride =  [1,1,1]
-        #filter_size = [16,32,64]
         with tf.variable_scope('compressor') as scope:
             if reuse : 
                 scope.reuse_variables()  
-            #x = self._conv(image, [3, 3, 3, 16], 1)    
-            x = self._conv(image, [3, 3, 3, 3], 1)      
+            x = self._conv(image, [3, 3, 3, 3], 1)         
             for i in range(len(filter_size)):
                 for j in range(len([3,3,3])):
                     #with tf.variable_scope('unit_%d_sublayer_%d' % (i, j)):
                         if j == 0:
                             if i == 0:
                                 # transition from init stage to the first stage stage
-                                #x = self._residual_unit(x, 16, filter_size[i], stride[i])
                                 x = self._residual_unit(x, 3, filter_size[i], stride[i])
                             else:
                                 x = self._residual_unit(x, filter_size[i - 1], filter_size[i], stride[i])
                         else:
                             x = self._residual_unit(x, filter_size[i], filter_size[i], stride[i])
-
-            #x = self.bo_batch_norm(x, self.is_train)
-            #x = tf.reduce_mean(x, [1,2])  ### average pooling layer
-            #x = ly.fully_connected(x, 128, activation_fn=tf.nn.relu)  ### fix the latent dimension
-            #x = tf.reshape(x,shape=[-1,32,32,3])
+            #print(x)
             return x 
 
-    def generator_conv(self,image,reuse=False):
+    def generator_conv(self, image, reuse=False):
         dim = 32
         with tf.variable_scope('compressor') as scope:
             if reuse : 
@@ -235,20 +222,7 @@ class shakenet:
             print(latent)
         return latent 
 
-    '''
-    def decoder_conv(self,latent,reuse=False):
-        with tf.variable_scope('reconstructor') as scope:
-            if reuse:
-                scope.reuse_variables()
-            dim = 32
-            #latent = ly.conv2d_transpose(latent,dim*8,kernel_size=3,stride=1,padding='SAME',activation_fn=tf.nn.leaky_relu)#,normalizer_fn=ly.batch_norm,weights_initializer=tf.random_normal_initializer(0, 0.02))          
-            upsample1 = ly.conv2d_transpose(latent, dim*4, kernel_size=3, stride=1, padding='SAME',activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
-            upsample2 = ly.conv2d_transpose(upsample1, dim*2, kernel_size=3, stride=1, padding='SAME',activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
-            upsample5 = ly.conv2d_transpose(upsample2, dim*1, kernel_size=3, stride=1, padding='SAME',activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
-            upsample6 = ly.conv2d_transpose(upsample2, 3, kernel_size=3, stride=1, padding='SAME',activation_fn=tf.nn.tanh, weights_initializer=tf.random_normal_initializer(0, 0.02))
-        return upsample6 
-    '''
-    def decoder_conv(self,latent,reuse=False):
+    def decoder_conv(self, latent, reuse=False):
         with tf.variable_scope('reconstructor') as scope:
             if reuse:
                 scope.reuse_variables()
@@ -258,13 +232,33 @@ class shakenet:
             latent = self.bo_batch_norm(latent, self.is_train)
             latent = tf.reshape(latent, shape=[-1,4,4,64])
             #latent = tf.reshape(latent, shape=[-1, 4, 4, 32])
-            upsample1 = ly.conv2d_transpose(latent, dim*4, kernel_size=3, stride=2, padding='SAME',activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
-            #upsample1 = self.bo_batch_norm(upsample1, self.is_train)
-            upsample2 = ly.conv2d_transpose(upsample1, dim*2, kernel_size=3, stride=2, padding='SAME',activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
+            upsample1 = ly.conv2d_transpose(latent, dim*4, kernel_size=3, stride=2, padding='SAME', activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
+            upsample1 = self.bo_batch_norm(upsample1, self.is_train)
+            upsample2 = ly.conv2d_transpose(upsample1, dim*2, kernel_size=3, stride=2, padding='SAME', activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
+            upsample2 = self.bo_batch_norm(upsample2, self.is_train)
             #upsample5 = ly.conv2d_transpose(upsample2, dim*1, kernel_size=3, stride=1, padding='SAME',activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
-            upsample6 = ly.conv2d_transpose(upsample2, 3, kernel_size=3, stride=2, padding='SAME',activation_fn=tf.nn.tanh,weights_initializer=tf.random_normal_initializer(0, 0.02))
+            upsample6 = ly.conv2d_transpose(upsample2, 3, kernel_size=3, stride=2, padding='SAME', activation_fn=tf.nn.tanh, weights_initializer=tf.random_normal_initializer(0, 0.02))
         return upsample6 
-    
+
+    '''
+    def decoder_conv(self,latent,reuse=False):
+        with tf.variable_scope('reconstructor') as scope:
+            if reuse:
+                scope.reuse_variables()
+            #latent = ly.fully_connected(latent, 4*4*128, activation_fn=tf.nn.relu) 
+            #latent = self.bo_batch_norm(latent, self.is_train)
+            #latent = tf.reshape(latent,shape=[-1,4, 4, 128])
+            #latent = ly.fully_connected(latent,7*7*256,activation_fn =tf.nn.leaky_relu,normalizer_fn=ly.batch_norm,weights_initializer=tf.random_normal_initializer(0, 0.02))
+            #latent = tf.reshape(latent,shape=[-1,7,7,256])
+            dim = 32
+            #latent = ly.conv2d_transpose(latent,dim*8,kernel_size=3,stride=1,padding='SAME',activation_fn=tf.nn.leaky_relu)#,normalizer_fn=ly.batch_norm,weights_initializer=tf.random_normal_initializer(0, 0.02))          
+            unsample1 = ly.conv2d_transpose(latent, dim*4, kernel_size=3, stride=1, padding='SAME',activation_fn=tf.nn.relu)#,normalizer_fn=ly.batch_norm,weights_initializer=tf.random_normal_initializer(0, 0.02))
+            upsample2 = ly.conv2d_transpose(unsample1, dim*2, kernel_size=3, stride=1, padding='SAME',activation_fn=tf.nn.relu)#,normalizer_fn=ly.batch_norm,weights_initializer=tf.random_normal_initializer(0, 0.02))
+            #upsample5 = ly.conv2d_transpose(upsample2, dim*1, kernel_size=3, stride=1, padding='SAME',activation_fn=tf.nn.relu)#,normalizer_fn=ly.batch_norm,weights_initializer=tf.random_normal_initializer(0, 0.02))
+            upsample6 = ly.conv2d_transpose(upsample2, 3, kernel_size=3, stride=1, padding='SAME',activation_fn=tf.nn.tanh,weights_initializer=tf.random_normal_initializer(0, 0.02))
+        return upsample6 
+    '''
+
     def utility_classifier(self,image,num_classes,reuse=False):
         """
         Build model.
@@ -272,27 +266,14 @@ class shakenet:
             - batch_size: int, the batch size.
         :return d: dict, containing outputs on each layer.
         """
+        d = dict()    # Dictionary to save intermediate values returned from each layer.
+        #batch_size = kwargs.pop('batch_size', 128)
+        #num_classes = int(self.y.get_shape()[-1])
 
-        #image = ly.fully_connected(image, 3072, activation_fn=tf.nn.relu)  ## upsampling to original image
-        #image = self.batch_norm(image, is_training = self.is_train)
-        #image = tf.reshape(image, shape=[-1,32,32,3])
-        #print(image)
         batch_size = self.batch_size
-        '''
-        with tf.variable_scope('utility_classifier/decoder'):
-            #image = ly.fully_connected(image, , activation_fn=tf.nn.relu)  ## upsampling to original image
-            image = tf.reshape(image, shape=[-1, 2, 2, 32])
-            dim = 32
-            upsample1 = ly.conv2d_transpose(image, dim*4, kernel_size=3, stride=2, padding='SAME',activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
-            upsample1 = self.bo_batch_norm(upsample1, self.is_train)
-            upsample2 = ly.conv2d_transpose(upsample1, dim*2, kernel_size=3, stride=2, padding='SAME',activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
-            upsample2 = self.bo_batch_norm(upsample2, self.is_train)
-            upsample2 = ly.conv2d_transpose(upsample2, dim*2, kernel_size=3, stride=2, padding='SAME',activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
-            upsample2 = self.bo_batch_norm(upsample2, self.is_train)
-            image = ly.conv2d_transpose(upsample2, 3, kernel_size=3, stride=2, padding='SAME',activation_fn=tf.nn.tanh,weights_initializer=tf.random_normal_initializer(0, 0.02))
-        '''
 
-        with tf.variable_scope('utility_classifier/classifier'):
+        with tf.variable_scope('utility_classifier') as scope:
+
             if reuse:
                 scope.reuse_variables()
             # input
@@ -340,30 +321,32 @@ class shakenet:
                 logits = self.fc_layer(f_emb, num_classes)
                 print('logits.shape', logits.get_shape().as_list())
             
+
+
             ### vary much scope that is used to avoid the name of each weight duplicate.
             # softmax
             #d['pred'] = tf.nn.softmax(d['logits'])
             return logits
 
     def shake_stage(self, x, output_filters, num_blocks, stride, batch_size):
-        """
-        Build sub stage with many shake blocks.
-        :param x: tf.Tensor, input of shake_stage, shape: (N, H, W, C).
-        :param output_filters: int, the number of output filters in shake_stage.
-        :param num_blocks: int, the number of shake_blocks in one shake_stage.
-        :param stride: int, the stride of the sliding window to be applied shake_block's branch. 
-        :param batch_size: int, the batch size.
-        :param d: dict, the dictionary for saving outputs of each layers.
-        :return tf.Tensor.
-        """
-        shake_stage_idx = int(math.log2(output_filters // 16))  #FIXME if you change 'first_channel' parameter
+            """
+            Build sub stage with many shake blocks.
+            :param x: tf.Tensor, input of shake_stage, shape: (N, H, W, C).
+            :param output_filters: int, the number of output filters in shake_stage.
+            :param num_blocks: int, the number of shake_blocks in one shake_stage.
+            :param stride: int, the stride of the sliding window to be applied shake_block's branch. 
+            :param batch_size: int, the batch size.
+            :param d: dict, the dictionary for saving outputs of each layers.
+            :return tf.Tensor.
+            """
+            shake_stage_idx = int(math.log2(output_filters // 64))  #FIXME if you change 'first_channel' parameter
 
-        for block_idx in range(num_blocks):
-            stride_block = stride if (block_idx == 0) else 1
-            with tf.variable_scope('shake_s{}_b{}'.format(shake_stage_idx, block_idx)):
-                x = self.shake_block(x, shake_stage_idx, block_idx, output_filters, stride_block, batch_size)
-            #d['shake_s{}_b{}'.format(shake_stage_idx, block_idx)] = x
-        return x
+            for block_idx in range(num_blocks):
+               stride_block = stride if (block_idx == 0) else 1
+               with tf.variable_scope('shake_s{}_b{}'.format(shake_stage_idx, block_idx)):
+                  x = self.shake_block(x, shake_stage_idx, block_idx, output_filters, stride_block, batch_size)
+                  #d['shake_s{}_b{}'.format(shake_stage_idx, block_idx)] = x
+            return x
 
 
     def shake_block(self, x, shake_stage_idx, block_idx, output_filters, stride, batch_size):
@@ -433,7 +416,6 @@ class shakenet:
 
         return x
 
-
     def shake_skip_connection(self, x, output_filters, stride):
         """
         Build one shake-shake skip connection.
@@ -477,8 +459,6 @@ class shakenet:
         :param shape: list(int).
         :return weights: tf.Variable.
         """
-        tf.set_random_seed(9)
-        np.random.seed(9)
         weights = tf.get_variable('weights', shape, tf.float32, tf.contrib.layers.xavier_initializer())
 
         return weights
@@ -491,8 +471,6 @@ class shakenet:
         :param value: float, initial value for biases.
         :return biases: tf.Variable.
         """
-        tf.set_random_seed(9)
-        np.random.seed(9)
         biases = tf.get_variable('biases', shape, tf.float32,
                                  tf.constant_initializer(value=value))
         return biases
@@ -523,27 +501,21 @@ class shakenet:
                               strides=[1, stride, stride, 1], padding=padding)
 
     def conv_layer_no_bias(self,x, side_l, stride, out_depth, padding='SAME'):
-        """
-        Add a new convolutional layer.
-        :param x: tf.Tensor, shape: (N, H, W, C).
-        :param side_l: int, the side length of the filters for each dimension.
-        :param stride: int, the stride of the filters for each dimension.
-        :param out_depth: int, the total number of filters to be applied.
-        :param padding: str, either 'SAME' or 'VALID',
-                             the type of padding algorithm to use.
-        :return: tf.Tensor.
-        """
-        tf.set_random_seed(9)
-        np.random.seed(9)
-        in_depth = int(x.get_shape()[-1])
 
+        in_depth = int(x.get_shape()[-1])
         filters = self.weight_variable([side_l, side_l, in_depth, out_depth])
-          
         return self.conv2d(x, filters, stride, padding=padding)
 
     def fc_layer(self,x, out_dim, **kwargs):
-        tf.set_random_seed(9)
-        np.random.seed(9)
+        """
+        Add a new fully-connected layer.
+        :param x: tf.Tensor, shape: (N, D).
+        :param out_dim: int, the dimension of output vector.
+        :param kwargs: dict, extra arguments, including weights/biases initialization hyperparameters.
+            - biases_value: float, initial value for biases.
+        :return: tf.Tensor.
+        """
+        #biases_value = kwargs.pop('biases_value', 0.1)
         in_dim = int(x.get_shape()[-1])
 
         weights = self.weight_variable([in_dim, out_dim])
@@ -551,8 +523,12 @@ class shakenet:
         return tf.matmul(x, weights) + biases
 
     def batch_norm(self,x, is_training, momentum=0.9, epsilon=0.00001):
-        tf.set_random_seed(9)
-        #np.random.seed(9)
+        """
+        Add a new batch-normalization layer.
+        :param x: tf.Tensor, shape: (N, H, W, C).
+        :param is_training: bool, train mode : True, test mode : False
+        :return: tf.Tensor.
+        """
         x = tf.layers.batch_normalization(x, momentum=momentum, epsilon=epsilon ,training=is_training)
         return x
 
@@ -561,14 +537,16 @@ class shakenet:
         a = []
         cifar_mean = np.array([0.4914,0.4822,0.4465])
         cifar_std = np.array([0.2470,0.2435,0.2616])
+
         for i in image:
             a.append(imrotate(i, angle, 'bicubic'))
 
         for i in range(len(a)):
             #a[i] = a[i]/255
             a[i] = (a[i]/127.5)-1
-            #a[i] -= cifar_mean
-            #a[i] /= cifar_std
+            a[i] -= cifar_mean
+            a[i] /= cifar_std
+
         return a
 
     def batch_mirror_image(self,image):
@@ -579,12 +557,19 @@ class shakenet:
 
     def batch_crop_image(self,image):
         a = [] 
-        for img in image : 
+        ind = [1,2]
+        '''
+        aug = random.sample(ind,1)
+        if aug ==2 : 
+            image = self.batch_mirror_image(image)
+        '''
+        for i in image : 
             reflection = bool(np.random.randint(2))
-            if reflection :
-                img = np.fliplr(img)
-
-            image_pad = np.pad(img,((4,4),(4,4),(0,0)),mode='constant')
+            if reflection:
+                 image = np.fliplr(i)
+            #else : 
+        #    image = image 
+            image_pad = np.pad(i,((4,4),(4,4),(0,0)),mode='constant')
 
             crop_x1 = random.randint(0,8)
             crop_x2 = crop_x1 + 32
@@ -615,11 +600,11 @@ class shakenet:
         epo = le//batch_size
         leftover = le - epo * batch_size
         sup = batch_size - leftover
-        c = list(zip(t_data,t_label))
-        random.shuffle(c)
-        t_data , t_label = zip(*c)
-        #self.curr_learning_rate = self.init_learning_rate
+        #c = list(zip(t_data,t_label))
+        #random.shuffle(c)
+        #t_data , t_label = zip(*c)
         for i in range(0,le,128):
+            #c = [0,1,2,3]
             c = [2,3]
             aug = random.sample(c,1)[0]
             if i ==  (epo *batch_size) : 
@@ -640,7 +625,7 @@ class shakenet:
                             np.concatenate((t_label[i:],t_label[:sup]),axis=0) , aug   
             else : 
                 if aug == 1:
-                    yield np.array(self.batch_crop_image(t_data[i:])+self.batch_crop_image(t_data[:sup])), np.array(t_label[i:i+128]), np.array(self.batch_random_rotate_image(t_data[i:i+128])) , np.array(t_label[i:i+128]) ,aug
+                    yield np.array(t_data[i:i+128]) , np.array(t_label[i:i+128]), np.array(self.batch_random_rotate_image(t_data[i:i+128])) , np.array(t_label[i:i+128]) ,aug
                 elif aug == 0:
                     yield np.array(t_data[i:i+128]) , np.array(t_label[i:i+128]), np.array(self.batch_mirror_image(t_data[i:i+128])) , np.array(t_label[i:i+128]) , aug
                 elif aug == 2 : 
@@ -648,49 +633,62 @@ class shakenet:
                 else :
                     yield np.array(t_data[i:i+128]) , np.array(t_label[i:i+128]), np.array(t_data[i:i+128]) , np.array(t_label[i:i+128]) ,aug
 
-
-    def train_next_batch(self,t_data,t_label,batch_size=128):
-        le = len(t_data)
-        epo = le//batch_size
-        leftover = le - epo * batch_size
-        sup = batch_size - leftover
-        c = list(zip(t_data,t_label))
-        random.shuffle(c)
-        t_data , t_label = zip(*c)
-        #self.curr_learning_rate = self.init_learning_rate
-        for i in range(0,le,128):
-            if i ==  (epo *batch_size) : 
-                yield np.array(self.batch_crop_image(t_data[i:])+self.batch_crop_image(t_data[:sup])), np.concatenate((t_label[i:],t_label[:sup]),axis=0), np.array(self.batch_random_rotate_image(t_data[i:i+128])) , np.array(t_label[i:i+128]) 
-            else : 
-                yield np.array(self.batch_crop_image(t_data[i:i+128])) , np.array(t_label[i:i+128]), np.array(t_data[i:i+128]) , np.array(t_label[i:i+128]) 
-
-
     def plot_10slot(self,name):
-        j = np.array(self.te_data[:128])
+
+        #j = np.array(self.te_data[:128])
+
         k = np.array([i for i in range(128)])
+
         no = np.random.normal(size=(128,32,32,3))
+
+        #uu = self.sess.run(self.latent,feed_dict={self.image_p:j.reshape(128,32,32,3),self.noise_p:no,self.label_p:k,self.is_train:False})
+
+        #yy = self.sess.run(self.up,feed_dict={self.latent:uu, self.is_train:False})
+        #yy = self.sess.run(self.up,feed_dict={self.image_p:j.reshape(128,32,32,3),self.noise_p:no,self.label_p:k,self.is_train:False})
+
+        #j , _ = self.val_set.next_batch(128, shuffle=False, augment=False, is_train=False)
+        j = self.val_set.images[:128]
+        print(j.shape)
+        k = self.val_set.labels[:128]
+
+        self.sess.run(self.assign_op)
+
         uu = self.sess.run(self.latent, feed_dict={self.image_p:j.reshape(128,32,32,3), self.label_p:k, self.is_train:False})
-        yy = self.sess.run(self.up, feed_dict={ self.latent:uu})
+
+        yy = self.sess.run(self.up, feed_dict={self.latent:uu,self.is_train:False}) 
+
         plt.figure(figsize=(10, 2))
+
         n = 10
+
         for i in range(n):
+
             ax = plt.subplot(2, n, i + 1)
-            plt.imshow(self.plot(self.te_data[i]))
+
+            plt.imshow(self.plot(j[i]))
+
             ax.get_xaxis().set_visible(False)
+
             ax.get_yaxis().set_visible(False)
+
             # display reconstruction
 
             ax = plt.subplot(2, n, i + 1 + n)
+
             plt.imshow(self.plot(yy[i]))
+
             ax.get_xaxis().set_visible(False)
+
             ax.get_yaxis().set_visible(False)
-        plt.savefig('cifar10/reconstructed_image'+str(name))
+           
+        plt.savefig('cpgan_log/reconstructed_image'+str(name))
 
     def plot(self,x):
 
         x = x - np.min(x)
 
-        x /= np.max(x)
+        #x /= np.max(x)
+        x = x / np.max(x)
 
         x *= 255  
 
@@ -700,7 +698,7 @@ class shakenet:
 
         return x 
 
-    def compute_acc(self, te_data, te_label, is_train=False):
+    def compute_acc(self,te_data,te_label,is_train=False):
 
         acc_list = []
 
@@ -710,7 +708,7 @@ class shakenet:
 
             no = np.random.normal(size=(b,32,32,3))
 
-            pred = self.sess.run(self.prob,feed_dict={self.image_p:j.reshape(b,32,32,3),self.label_p:k.reshape(-1),self.is_train:False})
+            pred = self.sess.run(self.prob,feed_dict={self.image_p:j.reshape(b,32,32,3),self.label_p:k,self.is_train:False})
 
             #aaa = self.sess.run(self.acc,feed_dict={self.image_p:j.reshape(b,32,32,3),self.label_p:k,self.is_train:False})
 
@@ -728,80 +726,123 @@ class shakenet:
         #print(ac)
         return ac
 
-    def predict(self,data):
-        if data.labels is not None : 
-            assert len(data.labels.shape) > 1 , 'Labels must be one-hot encoded'
+    def compute_reco_mse(self,data):
+        '''
+        error = []
+        for i , j in self.next_batch(self.te_data,self.te_label):
+            b = j.shape[0]
+            no = np.random.normal(size=(b,32,32,3))
+            up = self.sess.run(self.up, feed_dict={self.image_p:i.reshape(b,32,32,3), self.noise_p:no, self.is_train:False})
+            for k in range(len(up)):
+                #error.append(mean_squared_error(self.plot(i[k]).flatten(),self.plot(up[k]).flatten()))
+                error.append(mean_squared_error(i[k].flatten(), up[k].flatten()))
+        print('Average MSE among all testing images is {}'.format(np.mean(error)))
+        '''
+        error = []
+        self.sess.run(self.assign_op)
         num_classes = int(data.labels.shape[-1])
         pred_size = data.num_examples
         num_steps = pred_size // self.batch_size
-        _y_pred = []
         for i in range(num_steps+1):
             if i == num_steps:
                 _batch_size = pred_size - num_steps * self.batch_size
             else : 
                 _batch_size = self.batch_size
-
-            #no = np.random.normal(size=(_batch_size,32,32,3))
-            no = np.random.laplace(size=(_batch_size,32,32,3))
-
+            no = np.random.laplace(size=(_batch_size,32,32,3))   
             X , _ = data.next_batch(_batch_size,shuffle=False,augment=False,is_train=False)
+            up = self.sess.run(self.up,feed_dict={self.image_p:X, self.is_train:False,self.noise_p:no})
+            for k in range(len(up)):
+                error.append(mean_squared_error(X[k].flatten(), up[k].flatten()))   
+        print('Average MSE among all testing images is {}'.format(np.mean(error)))
+        return np.mean(error)
+    '''
+    def train(self):
+        epochs = 10000
+        mse_trace = []
+        acc_trace = []
+        count = 0
+        cur_lr = self.init_learning_rate
+        for i in range(epochs):
+            citers = 25
+            epoch_loss = []
+            start = time.time()
+            for j , k ,q , l ,aug in self.t_next_batch(self.t_data,self.t_label):
+                self.sess.run(self.assign_op)
+                if aug != 3 : 
+                    b = k.shape[0]
+                    no = np.random.normal(size=(b,32,32,3))
+                    feed_dict = {self.image_p:j.reshape(b,32,32,3),self.noise_p:no,self.label_p:l,self.is_train:True,self.learning_rate_p:cur_lr} 
+                else : 
+                    b = k.shape[0]
+                    no = np.random.normal(size=(b,32,32,3))
+                    feed_dict = {self.image_p:j.reshape(b,32,32,3),self.noise_p:no,self.label_p:l,self.is_train:True,self.learning_rate_p:cur_lr} 
+                d_loss , _= self.sess.run([self.loss_r,self.r_opt],feed_dict=feed_dict)
+                count+=1
+            end = time.time()
+            self._update_learning_rate_cosine(count,self.num_steps)
+            #print('{}/{} epochs , cost {} sec , the utility_loss = {}.,acc = {}'.format(i+1,epochs,end-start,lo,acc_1))
+            #at_acc = self.compute_acc(self.t_data,self.t_label,is_train=True)
+            #av_acc = self.compute_acc(self.te_data,self.te_label)
+            #print('Training accuracy is {}, testing accuracy is {}.lr is {}'.format(at_acc,av_acc,self.curr_learning_rate))
+            #acc_trace.append(av_acc)
+            #self.saver.save(self.sess,'cifar10/model_'+str(i))    
+            a = self.compute_reco_mse()
+            mse_trace.append(a)
+            if i % 5 == 0:
+                self.plot_10slot(i)    
+        np.save('cpgan_log/mse_trace.npy',mse_trace)  
+        #f.close()
+    '''
 
-            y_pred = self.sess.run(self.prob,feed_dict={self.image_p:X, self.is_train:False,self.noise_p:no})
-
-            _y_pred.append(y_pred)
-
-        _y_pred = np.concatenate(_y_pred, axis=0)
-
-        y_true = data.labels
-
-        acc = accuracy_score(np.argmax(y_true,1),np.argmax(_y_pred,1))
-
-        return acc
 
     def train(self):
         citers = 25
-        ### pywu server is 5   ### 5 can not preserve enough privacy ... (maybe data is not enough....)
         gen = 1
         train_size = self.train_set.num_examples
         num_steps_per_epoch = train_size // self.batch_size
         num_steps = self.num_epochs * num_steps_per_epoch
         self.curr_learning_rate = self.init_learning_rate
         count = 1
-
-        #self.saver.restore(self.sess,'cpgan_log/model_1297')
+        mse_trace = []
+        #self.saver.restore(self.sess,'cpgan_log/model_70')
         #self.sess.run(self.assign_op)
-        #self.saver.restore(self.sess,'cpgan_log/model_237')
 
         for i in range(num_steps):
+            self.sess.run(self.assign_op)
             #no = np.random.normal(size=(self.batch_size,32,32,3))
-            no = np.random.laplace(size=(self.batch_size, 32, 32, 3))
-            X , y_true = self.train_set.next_batch(self.batch_size, shuffle=True, augment=True, is_train=True)
+            no = np.random.laplace(size=(self.batch_size,32,32,3))
+            X , y_true = self.train_set.next_batch(self.batch_size,shuffle=True,augment=False,is_train=True)
             #print(X.shape)
             #uti_update = tf.get_collection(tf.GraphKeys.UPDATE_OPS)#,'utility_classifier')
             #with tf.control_dependencies(uti_update):
-            feed_dict = {self.image_p:X, self.label_p:y_true, self.is_train:True, self.learning_rate_p:self.curr_learning_rate, self.noise_p:no}
+            feed_dict = {self.image_p:X,self.label_p:y_true,self.is_train:True,self.learning_rate_p:self.curr_learning_rate,self.noise_p:no}
 
-            for _ in range(citers):
-                _ = self.sess.run([self.r_opt],feed_dict=feed_dict)
-            _, loss, y_pred = self.sess.run([self.c_opt,self.loss_c,self.prob],feed_dict=feed_dict)
-            for _ in range(gen):
-                _ = self.sess.run([self.g_opt],feed_dict=feed_dict)
+            #for _ in range(citers):
+            _ = self.sess.run([self.r_opt],feed_dict=feed_dict)
+            #_, loss, y_pred = self.sess.run([self.c_opt,self.loss_c,self.prob],feed_dict=feed_dict)
+            #y_pred = self.sess.run(self.prob,feed_dict=feed_dict)
+
+            #for _ in range(gen):
+            #    _ = self.sess.run([self.g_opt],feed_dict=feed_dict)
 
             if (i+1) % num_steps_per_epoch ==0:
-                #print(loss)
                 #at_acc = self.predict(self.train_set)
-                at_acc = accuracy_score(np.argmax(y_pred,1),np.argmax(y_true,1))
-                av_acc = self.predict(self.val_set)
-                print('Epoch {}   Training accuracy is {}, testing accuracy is {}, cur learning rate is {:.6f}.'.format(count,at_acc,av_acc,self.curr_learning_rate))
+                #at_acc = accuracy_score(np.argmax(y_pred,1),np.argmax(y_true,1))
+                #av_acc = self.predict(self.val_set)
+                #print('Epoch {}   Training accuracy is {}, testing accuracy is {}, cur learning rate is {:.6f}.'.format(count,at_acc,av_acc,self.curr_learning_rate))
                 self._update_learning_rate_cosine(i,num_steps)
                 count += 1
-                self.saver.save(self.sess,'cpgan_log/model_'+str(count))
-
+                #self.saver.save(self.sess,'cpgan_log/model_'+str(count))
+                self.plot_10slot('10')
+                qq = self.compute_reco_mse(self.val_set)
+                print('Average MSE among all testing images is {}'.format(np.mean(qq)))
+                mse_trace.append(qq)
+                np.save('cifar10_log/mse_trace.npy',mse_trace)
 
     def _update_learning_rate_cosine(self, global_step, num_iterations):
         """
         update current learning rate, using Cosine function without restart(Loshchilov & Hutter, 2016).
-        """ 
+        """
         global_step = min(global_step, num_iterations)
         decay_step = num_iterations
         alpha = 0
@@ -809,24 +850,29 @@ class shakenet:
         decayed = (1 - alpha) * cosine_decay + alpha
         new_learning_rate = self.init_learning_rate * decayed
         #self.c_op._lr = new_learning_rate
-        self.curr_learning_rate = new_learning_rate  
+        self.curr_learning_rate = new_learning_rate
+
 
     def test(self):
-        #self.saver.restore(self.sess,'cpgan_log/model_137')
-        self.saver.restore(self.sess,self.arg.model_path)
-        print('successfully restore')
-        #print(len(self.sess.run(self.theta_g)))
-        av_acc = self.predict(self.val_set)
-        print('Testing accuracy is {}.'.format(av_acc))
-        #temp = self.sess.run(self.theta_g)
-        '''
-        a = []
-        for i in range(len(temp)):
-            a.append(temp[i].flatten())
-        for i in range(len(a)):
-            print(a[i].shape)
-        '''
+        #self.saver.restore(self.sess,'noise_log/model_1501')
         #self.compute_acc(self.te_data,self.te_label)
         #self.plot_10slot('restore')  
-        #np.save('Male_2_noise_loop30/g.npy',self.sess.run(self.theta_g))
+        #np.save('noise_log/g.npy',self.sess.run(self.theta_g))
+        temp  = np.load('cpgan_log/mse_trace.npy')
+        #plt.plot(a)
+        le = len(list(temp))
+        le = [i for i in range(le)]
+        plt.plot(le,temp)
+        plt.title('Training curve of the attcker network(CIFAR-10)')
+        #plt.yticks([0.5,0.6,0.7,0.8,0.9,1,1.1,1.2])
+        plt.yticks([0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,1.1,1.2])
+        #plt.yticks([0.6,0.7,0.8,0.9,1])
+        #plt.yticks([0.2,0.22,0.24,0.26,0.28])
+        plt.xlabel('Epochs')
+        plt.ylabel('Mean square error')
+        plt.savefig('cifar10_log/cifar_mse_trace.png')
+
+
+
+
 

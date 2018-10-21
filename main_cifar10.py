@@ -5,6 +5,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='CIFAR-10')
 	parser.add_argument('--train',type=bool,default=False,help='Training')
 	parser.add_argument('--test',type=bool,default=False,help='Testing')
+	parser.add_argument('--model_path',type=str,help='Model Path')
 	#parser.add_argument('--train_1',type=bool,default=False,help='Training with gpu:1')
 	args = parser.parse_args()
 	#print(args)
