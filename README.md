@@ -70,7 +70,7 @@ Windows : python main_wrs.py --train True (Training)
 Windows : python main_wrs.py --test True  (Testing)
 ```
 
-## **Single CelebA**
+### **Single CelebA**
 ```bash
 ├── dataset
     ├── 000001.png
@@ -90,7 +90,7 @@ Windows : python main_celeba.py --train True  --attritube Male --path dataset_pa
 Windows : python main_celeba.py --test True --model_path your_path
 ```
 
-## **Multi CelebA**
+### **Multi CelebA**
 $1 : path to the images of the dataset
 $2 : path to the lables of the dataset
 $2 : True (If training phase)
@@ -102,11 +102,11 @@ Windows : python main_mutli.py --train True --path dataset_path (training)
 Windows : python main_multi.py --test True --path dataset_path --model_path your_path (testing)
 ```
 
-### **Execution for training/testing (Privacy)**
+## **Execution for training/testing (Privacy)**
 
 Excuting command of the script in different experiments for both training and testing:
 
-## **Cifar10**
+### **Cifar10**
 ```
 At first, make a directory cpgan_log (e.g mkdir cpgan_log in ubuntu)
 Ubuntu : bash cifar10_reco_run.sh 
@@ -114,7 +114,7 @@ Windows : python main_cifar10_reco.py --train True (Training)
 Windows : python main_cifar10_reco.py --test True (Testing, only plot the training losss curve)
 ```
 
-## **SVHN**
+### **SVHN**
 Please set the directory of the SVHN as follow:
 ```bash
 ├── svhn
@@ -130,7 +130,7 @@ Windows : python main_wrs_reco.py --train True (Training)
 Windows : python main_wrs_reco.py --test True (Testing, only plot the training losss curve )
 ```
 
-## **Single CelebA**
+### **Single CelebA**
 ```bash
 ├── dataset
     ├── 000001.png
@@ -149,7 +149,7 @@ Windows : python main_reco.py --train True --path dataset_path (Training)
 Windows : python main_reco.py --test True --path dataset_path --model_path model_path (Testing) 
 ```
 
-## **Multi CelebA**
+### **Multi CelebA**
 $1 : path to the images of the dataset
 $2 : path to the lables of the dataset
 $2 : True (If training phase)
@@ -162,7 +162,7 @@ Windows : python main_multi_reco.py --test True  --path dataset_path --model_pat
 ```
 
 
-### **Experiments for the optimal Reconstructor**
+## **Experiments for the optimal Reconstructor**
 
 Explain what these tests test and why
 
