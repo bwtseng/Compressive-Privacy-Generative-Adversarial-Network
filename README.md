@@ -4,13 +4,13 @@ Machine learning has become more and more important in our life recent years and
 
 Including all ihe implentation python/bash script and reference in this CPGAN reco.
 
-### **Dataset**
+## **Dataset**
 
 * [CIFAR-10](https://www.cs.toronto.edu/~kriz/cifar.html) - Avaible on the Internet
 * [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) - Avaible on the Internet
 * [SVHN](http://ufldl.stanford.edu/housenumbers/) - Avaible on the Internet
 
-### **Prerequisites**
+## **Prerequisites**
 Our code is not limited to the version of thers packages bsides the tensoflow. We just
 
 list the version of the packages installed in our server as follow: 
@@ -24,7 +24,7 @@ Scipy == 1.1.0
 Matplotlib == 2.2.2
 ```
 
-### **Preprocessing of CelebA dataset**
+## **Preprocessing of CelebA dataset**
 Thank [FaceNet](https://github.com/davidsandberg/facenet) for the best MTCNN aligned open source code.
 ```bash
 ├── Dataset
@@ -40,11 +40,11 @@ python align_dataset_mtcnn.py input_dir output_dir --image_size 112 --margin 32 
 ```
 
 
-### **Execution for training/testing (Utility)**
+## **Execution for training/testing (Utility)**
 
 Command for training/testing CPGAN. Nota the excuting testing command only get the utility accuracy. 
 
-## **Cifar10**
+### **Cifar10**
 ```
 At first, make a directory cifar10_log (e.g mkdir cifar10_log in ubuntu)
 Ubuntu : bash cifar10_run.sh $1 $2 $3 $4
@@ -54,7 +54,7 @@ Ubuntu : bash cifar10_run.sh $1 $2 $3 $4
 Windows: python main_cifar10.py --test True --model_path your_path/to/cifar_log/model_checkpoint(Training)
 ```
 
-## **SVHN**
+### **SVHN**
 Please set the directory of the SVHN as follow:
 ```bash
 ├── svhn
