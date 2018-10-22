@@ -17,17 +17,26 @@ list the version of the packages installed in our server as follow:
 ```
 Windows 10/Ubuntu 16.0.5 
 Tensorflow == 1.6.0 
-Keras == 2.0.5
+Keras == 2.1.5
 Scikit-Learn == 0.20
-Numpy == 1.15
-Scipy == 1.15
-Matplotlib == 1.15
+Numpy == 1.14.3
+Scipy == 1.1.0
+Matplotlib == 2.2.2
 ```
 
 ### **Preprocessing of CelebA dataset**
 Thank [FaceNet](https://github.com/davidsandberg/facenet) for the best MTCNN aligned open source code.
+```bash
+├── Dataset
+    ├── CelebA
+    	├── 000000.png
+    	├── 000001.png
+    	├── XXXXXX.png
+    	└── 202599.png
 ```
-run 
+
+```
+python align_dataset_mtcnn.py input_dir output_dir --image_size 112 --margin 32 --random_order
 ```
 
 
@@ -35,17 +44,17 @@ run
 
 Command for training/testing CPGAN. Nota the excuting testing command only get the utility accuracy. 
 
-## Cifar10
+## **Cifar10**
 ```
 At first, make a directory cifar10_log (e.g mkdir cifar10_log in ubuntu)
-Ubuntu : bash cifar10_run.sh $ $ $ $
+Ubuntu : bash cifar10_run.sh $1 $2 $3 $4
 Windows : python main_cifar10.py --train True (Training)
 
-Ubuntu : bash cifar10_run.sh $ $ $ $
+Ubuntu : bash cifar10_run.sh $1 $2 $3 $4
 Windows: python main_cifar10.py --test True --model_path your_path/to/cifar_log/model_checkpoint(Training)
 ```
 
-## SVHN
+## **SVHN**
 Please set the directory of the SVHN as follow:
 ```bash
 ├── svhn
@@ -61,7 +70,7 @@ Windows : python main_wrs.py --train True (Training)
 Windows : python main_wrs.py --test True  (Testing)
 ```
 
-## Single CelebA
+## **Single CelebA**
 ```bash
 ├── dataset
     ├── 000001.png
@@ -81,13 +90,13 @@ Windows : python main_celeba.py --train True  --attritube Male --path dataset_pa
 Windows : python main_celeba.py --test True --model_path your_path
 ```
 
-## Multi CelebA
+## **Multi CelebA**
 $1 : path to the images of the dataset
 $2 : path to the lables of the dataset
 $2 : True (If training phase)
 $3 : False (If testing phase)
 ```
-At first, make a directory single_celebA (e.g mkdir single_celebA in ubuntu)
+At first, make a directory multicpgan_log (e.g mkdir multicpgan_log in ubuntu)
 Ubuntu : bash multi_celeba_run.sh $1 $2 $3 $4
 Windows : python main_mutli.py --train True --path dataset_path (training)
 Windows : python main_multi.py --test True --path dataset_path --model_path your_path (testing)
@@ -97,7 +106,7 @@ Windows : python main_multi.py --test True --path dataset_path --model_path your
 
 Excuting command of the script in different experiments for both training and testing:
 
-## Cifar10
+## **Cifar10**
 ```
 At first, make a directory cpgan_log (e.g mkdir cpgan_log in ubuntu)
 Ubuntu : bash cifar10_reco_run.sh 
@@ -105,7 +114,7 @@ Windows : python main_cifar10_reco.py --train True (Training)
 Windows : python main_cifar10_reco.py --test True (Testing, only plot the training losss curve)
 ```
 
-## SVHN
+## **SVHN**
 Please set the directory of the SVHN as follow:
 ```bash
 ├── svhn
@@ -121,12 +130,12 @@ Windows : python main_wrs_reco.py --train True (Training)
 Windows : python main_wrs_reco.py --test True (Testing, only plot the training losss curve )
 ```
 
-## Single CelebA
+## **Single CelebA**
 ```bash
 ├── dataset
     ├── 000001.png
     ├── 000002.png
-    ├── XXXXXX.png  
+    ├── XXXXXX.png 
     └── 202599.png
 ```
 $1 : path to the images of the dataset
@@ -140,12 +149,13 @@ Windows : python main_reco.py --train True --path dataset_path (Training)
 Windows : python main_reco.py --test True --path dataset_path --model_path model_path (Testing) 
 ```
 
-## Multi CelebA
+## **Multi CelebA**
 $1 : path to the images of the dataset
 $2 : path to the lables of the dataset
 $2 : True (If training phase)
 $3 : False (If testing phase)
 ```
+At first, make a directory multicpgan_log (e.g mkdir multicpgan_log in ubuntu)
 Ubuntu : bash multi_celeba_reco_run.sh $1 $2 $3 $4
 Windows : python main_multi_reco.py --train True --path dataset_path (Training)
 Windows : python main_multi_reco.py --test True  --path dataset_path --model_path model_path (Testing)
