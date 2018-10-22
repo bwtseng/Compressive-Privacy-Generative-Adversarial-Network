@@ -55,7 +55,7 @@ Windows: python main_cifar10.py --test True --model_path your_path/to/cifar_log/
 ```
 
 ### **SVHN**
-Please set the directory of the SVHN as follow:
+Please build the directory of the SVHN as follow:
 ```bash
 ├── svhn
     ├── train_32x32.mat
@@ -65,9 +65,8 @@ Please set the directory of the SVHN as follow:
 
 ```
 At first, make a directory svhn_log (e.g mkdir svhn_log in ubuntu)
-Ubuntu : bash svhn_run.sh $1 $2 $3
-Windows : python main_wrs.py --train True (Training)
-Windows : python main_wrs.py --test True  (Testing)
+Windows/Ubuntu : python main_wrs.py --train True (Training)
+Windows/Ubuntu : python main_wrs.py --test True  (Testing)
 ```
 
 ### **Single CelebA**
@@ -79,27 +78,17 @@ Windows : python main_wrs.py --test True  (Testing)
     └── 202599.png
 ```
 
-$1 : path to the images of the dataset
-$2 : path to the lables of the dataset
-$2 : True (If training phase)
-$3 : False (If testing phase)
 ```
 At first, make a directory single_celebA (e.g mkdir single_celebA in ubuntu)
-Ubuntu : bash single_celeba_run.sh $1 $2 $3 $4
-Windows : python main_celeba.py --train True  --attritube Male --path dataset_path 
-Windows : python main_celeba.py --test True --model_path your_path
+Windows/Ubuntu : python main_celeba.py --train True  --attritube Male --path dataset_path 
+Windows/Ubuntu : python main_celeba.py --test True --model_path your_path
 ```
-
 ### **Multi CelebA**
-$1 : path to the images of the dataset
-$2 : path to the lables of the dataset
-$2 : True (If training phase)
-$3 : False (If testing phase)
+
 ```
 At first, make a directory multicpgan_log (e.g mkdir multicpgan_log in ubuntu)
-Ubuntu : bash multi_celeba_run.sh $1 $2 $3 $4
-Windows : python main_mutli.py --train True --path dataset_path (training)
-Windows : python main_multi.py --test True --path dataset_path --model_path your_path (testing)
+Windows/Ubuntu : python main_mutli.py --train True --path dataset_path (training)
+Windows/Ubuntu : python main_multi.py --test True --path dataset_path --model_path your_path (testing)
 ```
 
 ## **Execution for training/testing (Privacy)**
@@ -109,13 +98,12 @@ Excuting command of the script in different experiments for both training and te
 ### **Cifar10**
 ```
 At first, make a directory cpgan_log (e.g mkdir cpgan_log in ubuntu)
-Ubuntu : bash cifar10_reco_run.sh 
-Windows : python main_cifar10_reco.py --train True (Training)
-Windows : python main_cifar10_reco.py --test True (Testing, only plot the training losss curve)
+Windows/Ubuntu : python main_cifar10_reco.py --train True (Training)
+Windows/Ubuntu : python main_cifar10_reco.py --test True (Testing, only plot the training losss curve)
 ```
 
 ### **SVHN**
-Please set the directory of the SVHN as follow:
+Please build the directory of the SVHN as follow:
 ```bash
 ├── svhn
     ├── train_32x32.mat
@@ -126,8 +114,8 @@ Please set the directory of the SVHN as follow:
 
 ```
 Ubuntu : bash svhn_reco_run.sh $1 $2 $3
-Windows : python main_wrs_reco.py --train True (Training)
-Windows : python main_wrs_reco.py --test True (Testing, only plot the training losss curve )
+Windows/Ubuntu : python main_wrs_reco.py --train True (Training)
+Windows/Ubuntu : python main_wrs_reco.py --test True (Testing, only plot the training losss curve )
 ```
 
 ### **Single CelebA**
@@ -138,27 +126,19 @@ Windows : python main_wrs_reco.py --test True (Testing, only plot the training l
     ├── XXXXXX.png 
     └── 202599.png
 ```
-$1 : path to the images of the dataset
-$2 : path to the lables of the dataset
-$2 : True (If training phase)
-$3 : False (If testing phase)
+
 ```
 At first, make a directory single_celebA (e.g mkdir single_celebA in ubuntu)
-Ubuntu : bash single_celeba_reco_run.sh $1 $2 $3 $4
-Windows : python main_reco.py --train True --path dataset_path (Training)
-Windows : python main_reco.py --test True --path dataset_path --model_path model_path (Testing) 
+Windows/Ubuntu : python main_reco.py --train True --path dataset_path (Training)
+Windows/Ubuntu : python main_reco.py --test True --path dataset_path --model_path model_path (Testing) 
 ```
 
 ### **Multi CelebA**
-$1 : path to the images of the dataset
-$2 : path to the lables of the dataset
-$2 : True (If training phase)
-$3 : False (If testing phase)
+
 ```
 At first, make a directory multicpgan_log (e.g mkdir multicpgan_log in ubuntu)
-Ubuntu : bash multi_celeba_reco_run.sh $1 $2 $3 $4
-Windows : python main_multi_reco.py --train True --path dataset_path (Training)
-Windows : python main_multi_reco.py --test True  --path dataset_path --model_path model_path (Testing)
+Windows/Ubuntu : python main_multi_reco.py --train True --path dataset_path (Training)
+Windows/Ubuntu : python main_multi_reco.py --test True  --path dataset_path --model_path model_path (Testing)
 ```
 
 
