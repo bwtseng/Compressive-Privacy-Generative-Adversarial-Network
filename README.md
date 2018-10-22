@@ -11,7 +11,7 @@ Including all ihe implentation python/bash script and reference in this CPGAN re
 * [SVHN](http://ufldl.stanford.edu/housenumbers/) - Avaible on the Internet
 
 ## **Prerequisites**
-Our code is not limited to the version of thers packages bsides the tensoflow. We just
+Our code is not limited to the version of these packages besides tensoflow. We just
 
 list the version of the packages installed in our server as follow: 
 ```
@@ -45,6 +45,7 @@ python align_dataset_mtcnn.py input_dir output_dir --image_size 112 --margin 32 
 Command for training/testing CPGAN. Nota the excuting testing command only get the utility accuracy. 
 
 ### **Cifar10**
+Load data with the built-in package from Keras.
 ```
 At first, make a directory cifar10_log (e.g mkdir cifar10_log in ubuntu)
 Ubuntu : bash cifar10_run.sh $1 $2 $3 $4
@@ -70,6 +71,7 @@ Windows/Ubuntu : python main_wrs.py --test True  (Testing)
 ```
 
 ### **Single CelebA**
+If you not use the preprocessing from our Github, please build the CelebA directory as follow : 
 ```bash
 ├── dataset
     ├── 000001.png
@@ -96,6 +98,7 @@ Windows/Ubuntu : python main_multi.py --test True --path dataset_path --model_pa
 Excuting command of the script in different experiments for both training and testing:
 
 ### **Cifar10**
+Load data with the built-in package from Keras.
 ```
 At first, make a directory cpgan_log (e.g mkdir cpgan_log in ubuntu)
 Windows/Ubuntu : python main_cifar10_reco.py --train True (Training)
@@ -113,12 +116,12 @@ Please build the directory of the SVHN as follow:
 
 
 ```
-Ubuntu : bash svhn_reco_run.sh $1 $2 $3
 Windows/Ubuntu : python main_wrs_reco.py --train True (Training)
 Windows/Ubuntu : python main_wrs_reco.py --test True (Testing, only plot the training losss curve )
 ```
 
 ### **Single CelebA**
+If you not use the preprocessing from our Github, please build the CelebA directory as follow : 
 ```bash
 ├── dataset
     ├── 000001.png
@@ -152,8 +155,7 @@ Give an example
 
 ## **Original Paper**
 
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
+[Compressive Privacy Generative Adversarial Networks](https://drive.google.com/file/d/1UOFbkf4Eq9TfF1_edXAkIVOVnvbVLY6Q/view?usp=sharing) 
 
 ## **Authors**
 
