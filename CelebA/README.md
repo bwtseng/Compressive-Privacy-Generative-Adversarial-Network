@@ -1,7 +1,7 @@
 # CelebA Dataset
 ## **Data Information**
 - Please refer to the [link](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html)
-- Use facenet source code to align and crop the images.
+- Use facenet source (refer to the folder "understand facenet") code to align and crop the images.
 
 ## **Experimental Detail**
 - Adopt classification accuracy as the utility evaluation metric.
