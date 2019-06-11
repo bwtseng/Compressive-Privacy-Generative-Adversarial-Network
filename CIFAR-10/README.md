@@ -14,7 +14,12 @@ Reconstructed images
 
 ![image](https://github.com/R06942098/CPGAN/blob/master/CIFAR-10/img/cifar_fig_res.png)
 
-
+| Model     | Accuracy |
+| ---       | ---      |
+| ResNet-20 | 92.28%   |
+| Zagoruyko | 96.2%    |
+| Xavier    | 96.45%   |
+| Zagoruyko | 93.87%   |
 
 ## **Excecution**
 ```
