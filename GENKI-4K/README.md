@@ -10,6 +10,8 @@
 - Privacy is evaluated by the adversaries (LRR, KRR, NN) 
 achieving minimum mean square error.
 ## **Empirical Results**
-![image]()
-![image]()
+![image](https://github.com/R06942098/CPGAN/blob/master/GENKI-4K/img/img1.png)
+
+
+![image](https://github.com/R06942098/CPGAN/blob/master/GENKI-4K/img/img2.png)
 
