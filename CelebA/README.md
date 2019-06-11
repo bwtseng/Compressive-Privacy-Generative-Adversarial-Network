@@ -12,7 +12,7 @@
 ### Reconstructed images from single task CPGAN.
 - The first row consists of the original images sampled from CIFAR-10 dataset, second row consists of the reconstructed images assuming that privatizer is identity function, and the last row consists of the images reconstructed images from the compressing representations.
 
-![image](https://github.com/R06942098/CPGAN/blob/master/SVHN/svhn_fig_res.png)
+![image](https://github.com/R06942098/CPGAN/blob/master/CelebA/img/single_celeba_res.png)
 
 | Model     | Accuracy |
 | ---       | ---      |
@@ -24,7 +24,7 @@
 ### Reconstructed images from multi task CPGAN.
 - The first row consists of the original images sampled from CIFAR-10 dataset, second row consists of the reconstructed images assuming that privatizer is identity function, and the last row consists of the images reconstructed images from the compressing representations.
 
-![image](https://github.com/R06942098/CPGAN/blob/master/SVHN/svhn_fig_res.png)
+![image](https://github.com/R06942098/CPGAN/blob/master/CelebA/img/multi_celeba_new.png)
 
 | Model     | Accuracy |
 | ---       | ---      |
