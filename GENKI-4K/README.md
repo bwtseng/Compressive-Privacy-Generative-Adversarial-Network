@@ -22,6 +22,6 @@ achieving minimum mean square error.
 
 ## **Excecution**
 ```
-- bash compile.sh
+bash compile.sh
 ```
 Note that you can tune different parameters defined in the "main" file.
