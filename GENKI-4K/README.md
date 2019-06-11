@@ -18,3 +18,7 @@ achieving minimum mean square error.
 
 - Neural networks not guarantee to attain minimum MSE.
 ![image](https://github.com/R06942098/CPGAN/blob/master/GENKI-4K/img/mse_comparison_Genki_cpgan.png)
+
+
+## **Excecution**
+- bash compile.sh, note that you can tune different parameters defined in the "main" file.
