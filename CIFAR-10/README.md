@@ -1,4 +1,4 @@
-# Synthetic Dataset
+# CIFAR-10 Dataset
 ## **Data Information**
 - Please refer to the [link](https://www.cs.toronto.edu/~kriz/cifar.html)
 - We use the package from tensorflow to load the whole dataset.
