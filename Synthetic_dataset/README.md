@@ -12,10 +12,10 @@ achieving minimum mean square error.
 
 ## **Empirical Results**
 - Trade-off between privacy and utility
-![image](https://github.com/R06942098/CPGAN/blob/master/HAR/img/HAR_data_final_nonlinear.png)
+![image](https://github.com/R06942098/CPGAN/blob/master/Synthetic_dataset/img/Synthetic_data_final.png)
 
 - Our CPGAN achieves the results similar to theorectical analysis.
-![image](https://github.com/R06942098/CPGAN/blob/master/HAR/img/mse_comparison_har_dnn.png)
+![image](https://github.com/R06942098/CPGAN/blob/master/Synthetic_dataset/img/Final_theory.png)
 
 
 ## **Excecution**
