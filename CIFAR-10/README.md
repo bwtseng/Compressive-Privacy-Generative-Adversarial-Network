@@ -8,8 +8,11 @@
 - Privacy is evaluated by qualitative results (i.e. reconstructed images).
 
 ## **Empirical Results**
-- Reconstructed images.
-![image](https://github.com/R06942098/CPGAN/blob/master/Synthetic_dataset/img/Synthetic_data_final.png)
+
+Reconstructed images
+- The first row consists of the original images sampled from CIFAR-10 dataset, second row consists of the reconstructed images assuming that privatizer is identity function, and the last row consists of the images reconstructed images from the compressing representations.
+
+![image](https://github.com/R06942098/CPGAN/blob/master/CIFAR-10/img/cifar_fig_res.png)
 
 
 
