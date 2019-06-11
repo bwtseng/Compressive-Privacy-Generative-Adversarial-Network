@@ -16,10 +16,9 @@
 
 | Model     | Accuracy |
 | ---       | ---      |
-| ResNet-20 | 97.70%   |
-| Zagoruyko | 98.46%    |
-| Xavier    | 98.6%   |
-| Zagoruyko | 97.68%   |
+| LNets+ANets | 87.30% |
+| Zhong | 89.97%   |
+| CPGAN | 89.92%   |
 
 ### Reconstructed images from multi task CPGAN.
 - The first row consists of the original images sampled from CIFAR-10 dataset, second row consists of the reconstructed images assuming that privatizer is identity function, and the last row consists of the images reconstructed images from the compressing representations.
@@ -28,10 +27,9 @@
 
 | Model     | Accuracy |
 | ---       | ---      |
-| ResNet-20 | 97.70%   |
-| Zagoruyko | 98.46%    |
-| Xavier    | 98.6%   |
-| Zagoruyko | 97.68%   |
+| Han | 92.52%   |
+| ATNET_GT | 90.18%    |
+| CPGAN   | 90.30%   |
 
 ## **Excecution**
 ```
