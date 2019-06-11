@@ -1,4 +1,4 @@
-# HAR Dataset
+# Synthetic Dataset
 ## **Data Information**
 
 - Sample 20k datae from two gaussian mixture model (for label 0/1) which has same covariance matrix.
