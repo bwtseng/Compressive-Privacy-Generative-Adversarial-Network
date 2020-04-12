@@ -254,7 +254,7 @@ class shakenet:
         self.theta_r_nn = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='adversary_nn')
         self.theta_r_lrr = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='adversary_lrr')
         self.theta_r_krr = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='adversary_krr')
-        self.theta_g = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='compressor')
+        self.theta_g = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='privatizer')
         self.theta_c_up = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='utility_classifier/decoder')
         self.theta_c = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='utility_classifier/classifier')
 
@@ -368,14 +368,17 @@ class shakenet:
     def generator_conv(self, image, reuse=False):
         ## Other choice of the privatizer.
         dim = 32
-        with tf.variable_scope('compressor') as scope:
+        with tf.variable_scope('privatizer') as scope:
             if reuse : 
                 scope.reuse_variables()
-            conv1 = ly.conv2d(image,dim*1, kernel_size=3, stride=2, padding='SAME', activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
+            conv1 = ly.conv2d(image,dim*1, kernel_size=3, stride=2, padding='SAME', activation_fn=tf.nn.relu, 
+                            weights_initializer=tf.random_normal_initializer(0, 0.02))
             conv1 = self.bo_batch_norm(conv1,self.is_train)
-            conv2 = ly.conv2d(conv1,dim*2, kernel_size=3, stride=2, padding='SAME', activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
+            conv2 = ly.conv2d(conv1,dim*2, kernel_size=3, stride=2, padding='SAME', activation_fn=tf.nn.relu, 
+                            weights_initializer=tf.random_normal_initializer(0, 0.02))
             conv2 = self.bo_batch_norm(conv2,self.is_train)
-            conv3 = ly.conv2d(conv2,dim*4, kernel_size=3, stride=2, padding='SAME', activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
+            conv3 = ly.conv2d(conv2,dim*4, kernel_size=3, stride=2, padding='SAME', activation_fn=tf.nn.relu, 
+                            weights_initializer=tf.random_normal_initializer(0, 0.02))
             conv4 = self.bo_batch_norm(conv3, self.is_train)
             latent = ly.fully_connected(tf.reshape(conv4, shape=[-1,4*4*dim*4]), self.com_dim, activation_fn=tf.nn.relu)
         return latent 
@@ -720,6 +723,7 @@ class shakenet:
         x = tf.layers.batch_normalization(x, momentum=momentum, epsilon=epsilon ,training=is_training)
         return x
 
+    # This function is replaced by the scirpt "data.py." 
     def batch_random_rotate_image(self,image):
         angle = np.random.uniform(low=-5.0, high=5.0)
         a = []
@@ -760,96 +764,8 @@ class shakenet:
             a.append(image_crop)
 
         return a
-
-
-    def next_batch(self,t_data,t_label,batch_size=128):
-        le = len(t_data)
-        epo = le//batch_size
-        leftover = le - epo * batch_size
-        sup = batch_size - leftover
-        for i in range(0,le,128):
-            if i ==  (epo *batch_size) : 
-                #yield np.array(encoder_input[i:]) , np.array(label[i:])
-                yield np.concatenate((t_data[i:],t_data[:sup]),axis=0) , np.concatenate((t_label[i:],t_label[:sup]),axis=0) 
-            else : 
-                yield np.array(t_data[i:i+128]) , np.array(t_label[i:i+128])
-
-
-    def eva_next_batch(self, t_emb, t_data, t_label, batch_size, shuffle=False):
-
-        le = len(t_data)
-        epo = le // batch_size
-        leftover = le - epo * batch_size
-        sup = batch_size - leftover
-
-        if shuffle : 
-            c = list(zip(t_data, t_label))
-            random.shuffle(c)
-            t_data , t_label = zip(*c)
-
-        for i in range(0, le, batch_size):
-
-            if i ==  (epo *batch_size) : 
-                yield np.array(t_emb[i:]), np.array(t_data[i:]) , np.array(t_label[i:])
-            else : 
-                yield np.array(t_embe[i: i+self.batch_size]), np.array(t_data[i: i+self.batch_size]) , np.array(t_label[i: i+self.batch_size])
-
-
-    def t_next_batch(self,t_data,t_label,batch_size=128):
-        le = len(t_data)
-        epo = le//batch_size
-        leftover = le - epo * batch_size
-        sup = batch_size - leftover
-        c = list(zip(t_data,t_label))
-        random.shuffle(c)
-        t_data , t_label = zip(*c)
-        #self.curr_learning_rate = self.init_learning_rate
-        for i in range(0,le,128):
-            c = [2,3]
-            aug = random.sample(c,1)[0]
-            if i ==  (epo *batch_size) : 
-                if aug==1 :
-                    #yield np.array(t_data[i:]) , np.array(t_label[i:]), np.array(self.batch_random_rotate_image(t_data[i:])) , np.array(t_label[i:]) ,aug
-                    yield np.concatenate((t_data[i:],t_data[:sup]),axis=0) , np.concatenate((t_label[i:],t_label[:sup]),axis=0) , np.array(self.batch_random_rotate_image(t_data[i:])+self.batch_mirror_image(t_data[:sup])),\
-                            np.concatenate((t_label[i:],t_label[:sup]),axis=0) , aug
-                elif aug == 0:
-                    #yield np.array(t_data[i:]) , np.array(t_label[i:]), np.array(self.batch_mirror_image(t_data[i:])) , np.array(t_label[i:]) , aug
-                    yield np.concatenate((t_data[i:],t_data[:sup]),axis=0) , np.concatenate((t_label[i:],t_label[:sup]),axis=0) , np.array(self.batch_mirror_image(t_data[i:])+self.batch_mirror_image(t_data[:sup])),\
-                            np.concatenate((t_label[i:],t_label[:sup]),axis=0) , aug
-                elif aug == 2:
-                    #yield np.array(t_data[i:]) , np.array(t_label[i:]), np.array(self.batch_crop_image(t_data[i:])) , np.array(t_label[i:]) , aug   
-                    yield np.concatenate((t_data[i:],t_data[:sup]),axis=0) , np.concatenate((t_label[i:],t_label[:sup]),axis=0) , np.array(self.batch_crop_image(t_data[i:])+self.batch_mirror_image(t_data[:sup])),\
-                            np.concatenate((t_label[i:],t_label[:sup]),axis=0) , aug                
-                else :
-                    yield np.concatenate((t_data[i:],t_data[:sup]),axis=0) , np.concatenate((t_label[i:],t_label[:sup]),axis=0) , np.concatenate((t_data[i:],t_data[:sup]),axis=0),\
-                            np.concatenate((t_label[i:],t_label[:sup]),axis=0) , aug   
-            else : 
-                if aug == 1:
-                    yield np.array(self.batch_crop_image(t_data[i:])+self.batch_crop_image(t_data[:sup])), np.array(t_label[i:i+128]), np.array(self.batch_random_rotate_image(t_data[i:i+128])) , np.array(t_label[i:i+128]) ,aug
-                elif aug == 0:
-                    yield np.array(t_data[i:i+128]) , np.array(t_label[i:i+128]), np.array(self.batch_mirror_image(t_data[i:i+128])) , np.array(t_label[i:i+128]) , aug
-                elif aug == 2 : 
-                    yield np.array(t_data[i:i+128]) , np.array(t_label[i:i+128]), np.array(self.batch_crop_image(t_data[i:i+128])) , np.array(t_label[i:i+128]) , aug
-                else :
-                    yield np.array(t_data[i:i+128]) , np.array(t_label[i:i+128]), np.array(t_data[i:i+128]) , np.array(t_label[i:i+128]) ,aug
-
-
-    def train_next_batch(self,t_data,t_label,batch_size=128):
-        le = len(t_data)
-        epo = le//batch_size
-        leftover = le - epo * batch_size
-        sup = batch_size - leftover
-        c = list(zip(t_data,t_label))
-        random.shuffle(c)
-        t_data , t_label = zip(*c)
-        #self.curr_learning_rate = self.init_learning_rate
-        for i in range(0,le,128):
-            if i ==  (epo *batch_size) : 
-                yield np.array(self.batch_crop_image(t_data[i:])+self.batch_crop_image(t_data[:sup])), np.concatenate((t_label[i:],t_label[:sup]),axis=0), np.array(self.batch_random_rotate_image(t_data[i:i+128])) , np.array(t_label[i:i+128]) 
-            else : 
-                yield np.array(self.batch_crop_image(t_data[i:i+128])) , np.array(t_label[i:i+128]), np.array(t_data[i:i+128]) , np.array(t_label[i:i+128]) 
-
-
+    # End here
+    
     def plot_10slot(self, data):
         data = np.array(data[:10])
         label = np.array([i for i in range(10)])
@@ -1105,7 +1021,7 @@ class shakenet:
 
             if epo % 30 == 0 : 
                 self.saver.save(self.sess, os.path.join(self.arg.model_dir, self.arg.name+"_ckpt_"+str(epo+1)))
-
+                self.plot_10slot(i)
 
     def _update_learning_rate_cosine(self, global_step, num_iterations):
         """
@@ -1183,7 +1099,7 @@ class shakenet:
 
         return tot_nb_params
 
-    def get_nb_params_shape(self,shape):
+    def get_nb_params_shape(self, shape):
         '''
         Computes the total number of params for a given shap.
         Works for any number of shapes etc [D,F] or [W,H,C] computes D*F and W*H*C.
@@ -1194,8 +1110,8 @@ class shakenet:
         return nb_params 
 
     # **********************************************
-    # Below function is no longer used, since tuning the best kernel from each epoch is too intractable, and it 
-    # can not lead to better performance in our experiments. So we directly drop it!
+    # Below function is no longer used, since tuning the best kernel parameter for each epoch is too intractable, and it 
+    # can not lead to better performance in our experiments. So we directly drop it! 
     # **********************************************
     def sklearn_sol(self, train_matrix, val_matrix, emb_matrix, emb_matrix_te, gamma ,mapping_dim, seed): 
 
