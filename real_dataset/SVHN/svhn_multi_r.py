@@ -465,6 +465,7 @@ class wrs:
             upsample6 = ly.conv2d_transpose(upsample2, 3, kernel_size=3, stride=2, padding='SAME',
                                                 activation_fn=tf.nn.tanh,
                                                 weights_initializer=tf.random_normal_initializer(0, 0.02))
+        abs
         return upsample6 
 
     def RFF_map(self, input_tensor, seed, stddev, output_dim): 
