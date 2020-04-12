@@ -1193,138 +1193,14 @@ class shakenet:
         return gamma, seed, mapping_dim
 
 
-    def assign(self, train_matrix, train_mu, epo):
-
-        feed_dict_assign = {}
-        tf.reset_default_graph()
-        self.build_model()
-        self.sess = tf.Session()
-        self.sess.run(tf.global_variables_initializer())
-        self.saver = tf.train.Saver(max_to_keep=5)
-
-        if epo != 0 : 
-            temp_c = [] 
-            c_file = np.load('multi_adv/theta_c.npy')
-            for i in range(len(c_file)): 
-                temp_c.append(tf.assign(self.theta_c[i], c_file[i]))
-
-            #temp_g = [] 
-            #g_file = np.load('multi_adv/theta_g.npy')
-            #for i in range(len(c_file)): 
-            #    temp_g.append(tf.assign(self.theta_g[i], g_file[i]))
-            temp_g = self.load_g()
-  
-            temp_r = [] 
-            r_file = np.load('multi_adv/theta_r.npy')
-            for i in range(len(r_file)): 
-                temp_r.append(tf.assign(self.theta_r_nn[i], r_file[i]))
-
-
-            self.sess.run([temp_c, temp_g])
-
-
-        if epo == 0 : 
-            #np.save('multi_adv/theta_g.npy', self.sess.run(self.theta_g))
-            self.save_g()
+    def assign(self, train_matrix, train_mu):
 
         emb_matrix_lrr, emb_matrix_krr = self.get_emb_matrix()
-
-        start = time.time()
-        gamma, seed, mapping_dim = self.tune(train_matrix, emb_matrix_lrr)
-        end = time.time()
-
-        print('Time for tuning the RFF parameters: {}.'.format(end-start))
-
-        #### *****************  For the empirical space computation, but doesn;t have enought GPU memory !!
-        #mse, emp_weights = self.empirical_sol(emb_matrix_lrr, train_matrix)
-        #print('Average MSE among all testing images is {}.(KRR (empirical space)).'.format(mse))
-        #feed_dict[self.emp_weights] = emp_weights
-        #### ***************** 
-
-
-        start = time.time()
-        train_data = []
-        train_label = []
-        lr = []
-
-        train_size = self.train_set.num_examples
-        num_steps_per_epoch = train_size // self.batch_size
-        num_steps = self.num_epochs * num_steps_per_epoch
-        citers = 25
-
-
-        if epo == 0: 
-            self.count = 0 
-
-
-        for _ in range(num_steps_per_epoch):
-            #no = np.random.normal(size=(self.batch_size,32,32,3))
-            no = np.random.laplace(size=(self.batch_size, 32, 32, 3))
-            X , y_true = self.train_set.next_batch(self.batch_size, shuffle=True, augment=True, is_train=True)
-
-            train_data.append(X)
-            train_label.append(y_true)
-            lr.append(self.curr_learning_rate)
-            feed_dict = {self.image_p:X, self.label_p:y_true, self.is_train:True, self.learning_rate_p:self.curr_learning_rate, self.noise_p:no}
-            for _ in range(citers):
-                _ = self.sess.run([self.r_opt],feed_dict=feed_dict)
-            _, loss, y_pred = self.sess.run([self.c_opt,self.loss_c,self.prob],feed_dict=feed_dict)
-            self._update_learning_rate_cosine(self.count, num_steps)
-            self.count +=1
-        end = time.time()  
-
-        np.save('multi_adv/theta_c.npy', self.sess.run(self.theta_c))
-        np.save('multi_adv/theta_r.npy', self.sess.run(self.theta_r_nn))
-
-
-        tf.reset_default_graph()
-        self.gamma = gamma
-        self.seed = seed
-        self.mapping_dim = mapping_dim
-        self.build_model()
-
-        #self.assign_op += self.assign_each_part()
-        self.sess = tf.Session()
-        self.sess.run(tf.global_variables_initializer())
-        self.saver = tf.train.Saver(max_to_keep=5)
-
-        #if epo != 0 : 
-        temp_c = [] 
-        c_file = np.load('multi_adv/theta_c.npy')
-        for i in range(len(c_file)): 
-            temp_c.append(tf.assign(self.theta_c[i], c_file[i]))
-
-        #temp_g = [] 
-        #g_file = np.load('multi_adv/theta_g.npy')
-        #for i in range(len(g_file)): 
-        #   temp_g.append(tf.assign(self.theta_g[i], g_file[i]))
-        temp_g = self.load_g()
-
-
-        temp_r = [] 
-        r_file = np.load('multi_adv/theta_r.npy')
-        for i in range(len(r_file)): 
-            temp_r.append(tf.assign(self.theta_r_nn[i], r_file[i]))
-
-        self.sess.run([temp_c, temp_g, temp_r])
-
-        emb_matrix_lrr, emb_matrix_krr = self.get_emb_matrix()
-
-        #np.save('multi_adv/theta_g.npy', self.sess.run(theta_g))
-
-        #self.build_model()
-        #self.assign_op += self.assign_each_part()
-        #self.sess = tf.Session()
-        #self.sess.run(tf.global_variables_initializer())
-        #self.saver = tf.train.Saver(max_to_keep=5)
 
         error_list = []
         update_choice = [self.g_opt_nn, self.g_opt_lrr, self.g_opt_krr]
-        assign_op = []
 
         lrr_weights, lrr_mu = self.LRR_close_form(emb_matrix_lrr, train_matrix, train_mu)
-        #assign_op.append(tf.assign(self.theta_r_lrr[0], lrr_weights))
-        #print(assign_op)
         feed_dict_assign[self.lrr_mu_p] = lrr_mu
         feed_dict_assign[self.lrr_weights] = lrr_weights
 
@@ -1334,29 +1210,22 @@ class shakenet:
         feed_dict_assign[self.krr_weights] = krr_weights
         feed_dict_assign[self.t_mu_p] = train_mu
 
-        #assign_op.append(tf.assign(self.theta_r_krr[0], krr_weights))
-
-        #assign_op.append(tf.assign(self.lrr_mu, lrr_mu))
-        #assign_op.append(tf.assign(self.krr_mu, krr_mu))
-        #assign_op.append(tf.assign(self.t_mu, train_mu))
-
-        #self.sess.run(assign_op)
-
         self.sess.run(self.assign_op, feed_dict = feed_dict_assign)
 
         error_nn, error_lrr, error_krr = self.compute_reco_mse(self.val_set)
         error_list.append(error_nn) 
         error_list.append(error_lrr)
         error_list.append(error_krr)
-        print('Average MSE among all testing images is {}, {}, {}.(nn,lrr,krr)'.format(error_nn, error_lrr, error_krr))
+        print('Average MSE of all testing images are [{:.3f}, {:.3f}, {:.3f}].(nn, lrr, krr)'.format(error_nn, error_lrr, 
+                                                                                                        error_krr))
         optimize_g = update_choice[np.argmin(error_list)]
-        return optimize_g, feed_dict_assign, train_data, train_label, lr
+        return optimize_g, feed_dict_assign
 
 
     def train(self):
-        citers = 25
+        citers = self.arg.citer
         ### citers = 25
-        ### pywu server is 5  
+        ### our server setting may be 5.  
         gen = 1
 
         train_size = self.train_set.num_examples
@@ -1365,11 +1234,37 @@ class shakenet:
         self.curr_learning_rate = self.init_learning_rate
 
         count = 0
-        update_choice = [self.g_opt_nn, self.g_opt_lrr, self.g_opt_krr]
         train_matrix = self.get_train_matrix()
         train_mu = np.mean(train_matrix, axis=0)
-        temp = train_matrix-train_mu
-        print("training matrix ceter adjust : {}".format(np.mean(temp)))
+        #train_matrix = train_matrix-train_mu
+        #print("training matrix ceter adjust : {}".format(np.mean(train_matrx)))
+
+        train_size = self.train_set.num_examples
+        num_steps_per_epoch = train_size // self.batch_size
+        num_steps = self.num_epochs * num_steps_per_epoch
+        # Cuase for the augumentation in 
+        lr_list = []
+        train_data_list = []
+        train_label_list = [] 
+        for _ in range(num_steps_per_epoch):
+            #no = np.random.normal(size=(self.batch_size,32,32,3))
+            no = np.random.laplace(size=(self.batch_size, 32, 32, 3))
+            X , y_true = self.train_set.next_batch(self.batch_size, shuffle=True, augment=True, is_train=True)
+
+            train_data.append(X)
+            train_label.append(y_true)
+            lr.append(self.curr_learning_rate)
+            feed_dict = {}
+            feed_dict[self.image_p] = X
+            feed_dict[self.label_p] = y_true
+            feed_dict[self.learning_rate_p] = self.curr_learning_rate
+            feed_dict[self.noise_p] = no
+            for _ in range(self.arg.citer):
+                _ = self.sess.run([self.r_opt], feed_dict=feed_dict)
+            _, uti_loss, y_pred = self.sess.run([self.c_opt, self.loss_c, self.prob],feed_dict=feed_dict)
+            self._update_learning_rate_cosine(self.count, num_steps)
+            self.count +=1
+        end = time.time()  
 
         for epo in range(self.num_epochs):
 
