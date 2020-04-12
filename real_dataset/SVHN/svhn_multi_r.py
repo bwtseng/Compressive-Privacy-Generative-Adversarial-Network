@@ -23,7 +23,6 @@ from sklearn.model_selection import train_test_split
 
 plt.switch_backend('agg')
 class wrs:
-
     def __init__(self,arg):
 
         self.arg = arg
@@ -35,9 +34,9 @@ class wrs:
         self.batch_size = self.arg.batch_size
         self.lr = 0.001
 
-        assert len(self.t_data) == len(self.t_label), 'Ensure the training data size'
-        assert len(self.v_data) == len(self.v_label), 'Ensure the validation data size'
-        assert len(self.te_data) == len(self.te_label), 'Ensure the testing data size'
+        assert len(self.t_data) == len(self.t_label), 'Ensure training data size'
+        assert len(self.v_data) == len(self.v_label), 'Ensure validation data size'
+        assert len(self.te_data) == len(self.te_label), 'Ensure testing data size'
         self.build_model()
 
         print("The number of multiplication and addtion : {} and {}.".format(self.g_multiplication,self.g_addition))
@@ -455,11 +454,17 @@ class wrs:
             latent = self.bo_batch_norm(latent, self.is_train)
             latent = tf.reshape(latent, shape=[-1,4,4,64])
             #latent = tf.reshape(latent, shape=[-1, 4, 4, 32])
-            upsample1 = ly.conv2d_transpose(latent, dim*4, kernel_size=3, stride=2, padding='SAME',activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
+            upsample1 = ly.conv2d_transpose(latent, dim*4, kernel_size=3, stride=2, padding='SAME',
+                                                activation_fn=tf.nn.relu, 
+                                                weights_initializer=tf.random_normal_initializer(0, 0.02))
             #upsample1 = self.bo_batch_norm(upsample1, self.is_train)
-            upsample2 = ly.conv2d_transpose(upsample1, dim*2, kernel_size=3, stride=2, padding='SAME',activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
+            upsample2 = ly.conv2d_transpose(upsample1, dim*2, kernel_size=3, stride=2, padding='SAME',
+                                                activation_fn=tf.nn.relu, 
+                                                weights_initializer=tf.random_normal_initializer(0, 0.02))
             #upsample5 = ly.conv2d_transpose(upsample2, dim*1, kernel_size=3, stride=1, padding='SAME',activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
-            upsample6 = ly.conv2d_transpose(upsample2, 3, kernel_size=3, stride=2, padding='SAME',activation_fn=tf.nn.tanh,weights_initializer=tf.random_normal_initializer(0, 0.02))
+            upsample6 = ly.conv2d_transpose(upsample2, 3, kernel_size=3, stride=2, padding='SAME',
+                                                activation_fn=tf.nn.tanh,
+                                                weights_initializer=tf.random_normal_initializer(0, 0.02))
         return upsample6 
 
     def RFF_map(self, input_tensor, seed, stddev, output_dim): 
@@ -1252,7 +1257,7 @@ class wrs:
     #def count_operation(self, shape):
     #    k , l = shape
 
-    def get_nb_params_shape(self,shape):
+    def get_nb_params_shape(self, shape):
         '''
         Computes the total number of params for a given shap.
         Works for any number of shapes etc [D,F] or [W,H,C] computes D*F and W*H*C.
