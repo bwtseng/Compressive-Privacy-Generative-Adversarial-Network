@@ -1,7 +1,14 @@
 # CIFAR-10 Dataset
-## **Data Information**
+
+## Data Information
+
 - Please refer to the [link](https://www.cs.toronto.edu/~kriz/cifar.html)
-- We use the package from tensorflow to load the whole dataset.
+- To load this dataset, tensorflow and keras already provide a convenient way for all the researchers, for more information, please visit there official website. 
+
+## Evaluation Metrics
+
+- Adopt classification accuracy as the utility evaluation metric.
+- Privacy is evaluated by qualitative results, that is, we evaluate the quality of the reconstructed images under human perception, as there is no fair comparison in the literature using the mean square loss.
 
 ## **Experimental Detail**
 - Adopt classification accuracy as the utility evaluation metric.
@@ -9,20 +16,25 @@
 
 ## **Empirical Results**
 
-Reconstructed images
-- The first row consists of the original images sampled from CIFAR-10 dataset, second row consists of the reconstructed images assuming that privatizer is identity function, and the last row consists of the images reconstructed images from the compressing representations.
+- Reconstructions:
 
-![image](https://github.com/R06942098/CPGAN/blob/master/CIFAR-10/img/cifar_fig_res.png)
+<center> <img src="img/cifar_fig_res.png" width="450" height="200"></center>
 
-| Model     | Accuracy |
-| ---       | ---      |
-| ResNet-20 | 92.28%   |
-| Zagoruyko | 96.2%    |
-| Xavier    | 96.45%   |
-| Zagoruyko | 93.87%   |
+The first row of each figure consists of randomly sampled original images.  The second row consists of the reconstructed images assuming the adversary acquires the original image.  The last row consists of the images reconstructed from the compressing representations under white-box attack: 
 
-## **Excecution**
+- Utility Accuracy:
+
+  | Model     | Accuracy |
+  | ---       | ---      |
+  | ResNet-20 | 92.28%   |
+  | Zagoruyko | 96.2%    |
+  | Xavier    | 96.45%   |
+  | Zagoruyko | 93.87%   |
+
+# Execution 
+
 ```
-bash compile.sh
+python main_multiple_celeba.py --train True --data_dir "Your Path" --label_dir "Your path""
 ```
-Note that you can tune different parameters defined in the "main" file.
+
+The rest of the argument are not listed here, if you want to tune the parameters, please refer to the the file, which start with "main".

@@ -599,7 +599,7 @@ class CPGAN:
 
     def RFF_map(self, input_tensor_1, input_tensor_2, seed, stddev, output_dim):
         input_tensor = tf.concat([input_tensor_1, input_tensor_2], axis=1)
-        print("Information that the adversary can get: {}".format(input_tensor))
+        print("Information that the adversary is able to attain: {}".format(input_tensor))
         random_state = check_random_state(seed)
         gamma = stddev
         omega_matrix_shape = [self.arg.dim*2, output_dim]
@@ -607,7 +607,7 @@ class CPGAN:
 
         '''
         *******************************
-        This is the source from scikit-learn function RFF_MAP
+        This is the source from Tensorflow function RFF_Sampler
         ******************************* 
         np.random.seed(9)
         self._stddev = stddev
@@ -628,7 +628,7 @@ class CPGAN:
             math_ops.matmul(input_tensor, omega_matrix), bias)
         '''
         # *****************************
-        # Instead, we use the tensorflow source RFF mapping, please find more detail in the official document.
+        # Instead, we use the scikit-learn source code "RFF mapping", please find more detail in the official document.
         # *****************************
         omega_matrix = constant_op.constant(np.sqrt(2 * gamma) *
            random_state.normal(size=omega_matrix_shape),dtype=dtypes.float32)
@@ -878,7 +878,7 @@ class CPGAN:
 
     def get_emb_matrix(self): 
         count = 0
-        for batch_x, batch_y in self.next_batch(self.t_data, self.t_label, self.batch_size):
+        for batch_x, batch_y in self.next_batch(self.t_data, self.t_label, shuffle=False, batch_szie=self.batch_size):
             b = batch_x.shape[0]
             no = np.random.normal(size=(128, 175, 175, 3))
             batch_x = batch_x.reshape(b, 175, 175, 3)

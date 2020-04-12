@@ -27,12 +27,9 @@ tf.set_random_seed(9)
 np.random.seed(9)
 plt.switch_backend('agg')
 
-class shakenet:
-
+class CPGAN:
     def __init__(self,arg):
         self.arg = arg
-        self.batch_size = 128
-        self.init_learning_rate = 0.2
         self.com_dim = self.arg.com_dim
         ### tunable parameter.
         self.gamma = self.arg.gamma
@@ -42,8 +39,9 @@ class shakenet:
         self.num_epochs = 1800
         self.output_g = []
         self.output_c = []
-
-        ### For the LRR and KRR close-form solution.
+        # ***********************************
+        # For LRR and KRR close-form solution.
+        # ***********************************
         self.t_data = self.get_train_matrix()
         self.train_set , self.val_set = self.load_data()
         
@@ -51,14 +49,6 @@ class shakenet:
 
         print("The number of multiplication and addtion : {} and {}.".format(self.g_multiplication,self.g_addition))
         print("The number of multiplication and addtion : {} and {}.".format(self.c_multiplication,self.c_addition))
-
-    def preprocess(self,data):
-        a=[]
-        for i in  data: 
-            temp = self.plot(i)
-            temp = (temp/127.5)-1
-            a.append(temp)
-        return a
 
     def load_data(self):
         t_data,te_data,t_label,te_label = dataset.read_CIFAR10_subset()
@@ -134,7 +124,9 @@ class shakenet:
         with tf.variable_scope('adversary_lrr') as scope:  
             if reuse: 
                 scope.reuse_variables()
-            recontruction = ly.fully_connected(latent, 32*32*3, activation_fn=None, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer = None)
+            recontruction = ly.fully_connected(latent, 32*32*3, activation_fn=None, 
+                                               weights_initializer=tf.contrib.layers.xavier_initializer(), 
+                                               biases_initializer = None)
         return tf.reshape(recontruction, shape=[-1, 32, 32, 3])
 
 
@@ -145,7 +137,9 @@ class shakenet:
         with tf.variable_scope('adversary_krr') as scope:  
             if reuse: 
                 scope.reuse_variables()
-            recontruction = ly.fully_connected(kernel_map, 32*32*3, activation_fn=None, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer = None)
+            recontruction = ly.fully_connected(kernel_map, 32*32*3, activation_fn=None, 
+                                               weights_initializer=tf.contrib.layers.xavier_initializer(), 
+                                               biases_initializer = None)
         return tf.reshape(recontruction, shape=[-1, 32, 32, 3])
 
 
@@ -161,12 +155,19 @@ class shakenet:
             latent = ly.fully_connected(latent, 4*4*64, activation_fn=tf.nn.relu)
             latent = self.bo_batch_norm(latent, self.is_train)
             latent = tf.reshape(latent, shape=[-1,4,4,64])
-            upsample1 = ly.conv2d_transpose(latent, dim*4, kernel_size=3, stride=2, padding='SAME', activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
-            upsample2 = ly.conv2d_transpose(upsample1, dim*2, kernel_size=3, stride=2, padding='SAME', activation_fn=tf.nn.relu, weights_initializer=tf.random_normal_initializer(0, 0.02))
-            upsample3 = ly.conv2d_transpose(upsample2, 3, kernel_size=3, stride=2, padding='SAME', activation_fn=tf.nn.tanh, weights_initializer=tf.random_normal_initializer(0, 0.02))
+            upsample1 = ly.conv2d_transpose(latent, dim*4, kernel_size=3, stride=2, padding='SAME', 
+                                            activation_fn=tf.nn.relu, 
+                                            weights_initializer=tf.random_normal_initializer(0, 0.02))
+            upsample2 = ly.conv2d_transpose(upsample1, dim*2, kernel_size=3, stride=2, padding='SAME', 
+                                            activation_fn=tf.nn.relu, 
+                                            weights_initializer=tf.random_normal_initializer(0, 0.02))
+            upsample3 = ly.conv2d_transpose(upsample2, 3, kernel_size=3, stride=2, padding='SAME', 
+                                            activation_fn=tf.nn.tanh, 
+                                            weights_initializer=tf.random_normal_initializer(0, 0.02))
         return upsample3
 
     def RFF_map(self, input_tensor, seed, stddev, output_dim): 
+        print("Information that the adversary is able to attain: {}".format(input_tensor))
         """
         Refer to the scikit learn package "RFF sampler" and tensorflow RFF mapping.
         """
@@ -215,7 +216,7 @@ class shakenet:
         ### Input placeholder
         self.image_p = tf.placeholder(tf.float32, shape=[None, 32,32,3])
         self.label_p = tf.placeholder(tf.int64, shape=[None, 10])
-        self.is_train = tf.placeholder(tf.bool) ## For batchnormalization
+        self.is_train = tf.placeholder(tf.bool) ## For batchnormalization and dropout function
         self.learning_rate_p = tf.placeholder(tf.float32)
         self.noise_p = tf.placeholder(tf.float32, shape=[None, 32, 32, 3])
         self.keep_prob = tf.placeholder(tf.float32)
@@ -254,7 +255,7 @@ class shakenet:
         self.theta_r_nn = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='adversary_nn')
         self.theta_r_lrr = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='adversary_lrr')
         self.theta_r_krr = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='adversary_krr')
-        self.theta_g = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='compressor')
+        self.theta_g = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='privatizer')
         self.theta_c_up = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='utility_classifier/decoder')
         self.theta_c = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='utility_classifier/classifier')
 
@@ -271,8 +272,8 @@ class shakenet:
 
         ### Combination loss.
         self.loss_g_nn = utility_loss - self.loss_r_nn
-        self.loss_g_lrr = 10*utility_loss - self.loss_r_lrr
-        self.loss_g_krr = 10*utility_loss - self.loss_r_krr
+        self.loss_g_lrr = self.arg.trade_off*utility_loss - self.loss_r_lrr
+        self.loss_g_krr = self.arg.trade_off*utility_loss - self.loss_r_krr
 
         print('The numbers of parameters in variable_scope G are : {}'.format(self.count_number_trainable_params(self.theta_g)))
         print('The numbers of parameters in variable_scope R are : {}'.format(self.count_number_trainable_params(self.theta_c)))
@@ -315,7 +316,7 @@ class shakenet:
             self.r_opt = self.r_op.minimize(self.loss_r_nn, var_list=self.theta_r_nn)
 
             self.c_op = tf.train.MomentumOptimizer(self.learning_rate_p, 0.9, use_nesterov=True)
-            self.c_opt = self.c_op.minimize(self.loss_c,var_list = self.theta_c+self.theta_c_up)
+            self.c_opt = self.c_op.minimize(self.loss_c, var_list = self.theta_c+self.theta_c_up)
 
         self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
@@ -340,7 +341,7 @@ class shakenet:
         self.g_addition = 0 
         self.g_multiplication = 0
 
-        with tf.variable_scope('compressor') as scope:
+        with tf.variable_scope('privatizer') as scope:
             if reuse : 
                 scope.reuse_variables()
             channel = image.get_shape().as_list()[-1] 
@@ -573,12 +574,12 @@ class shakenet:
            self.c_multiplication +=1 
            self.c_addition += 1 
 
-        #### condition on the forward and backward need different flow chart.
-        #### refer to https://stackoverflow.com/questions/36456436/how-can-i-define-only-the-gradient-for-a-tensorflow-subgraph/36480182#36480182
-        x = tf.cond(self.is_train, lambda: x * random_backward + tf.stop_gradient(x * random_forward - x * random_backward) , lambda: x / num_branches)
+        # condition on the forward and backward need different flow chart.
+        # refer to https://stackoverflow.com/questions/36456436/how-can-i-define-only-the-gradient-for-a-tensorflow-subgraph/36480182#36480182
+        x = tf.cond(self.is_train, lambda: x * random_backward + tf.stop_gradient(x * random_forward - x * random_backward), 
+                    lambda: x / num_branches)
 
         self.c_multiplication += 1 
-
         return x
 
 
@@ -647,7 +648,7 @@ class shakenet:
 
         return weights
 
-    def bias_variable(self,shape, value=1.0):
+    def bias_variable(self, shape, value=1.0):
         """
         Initialize a bias variable with given shape,
         with given constant value.
@@ -720,6 +721,9 @@ class shakenet:
         x = tf.layers.batch_normalization(x, momentum=momentum, epsilon=epsilon ,training=is_training)
         return x
 
+    # ****************************
+    # These functions is no longer used in this scipt after authors find another source code to deal with the data augumentation.
+    # ****************************
     def batch_random_rotate_image(self,image):
         angle = np.random.uniform(low=-5.0, high=5.0)
         a = []
@@ -760,95 +764,7 @@ class shakenet:
             a.append(image_crop)
 
         return a
-
-
-    def next_batch(self,t_data,t_label,batch_size=128):
-        le = len(t_data)
-        epo = le//batch_size
-        leftover = le - epo * batch_size
-        sup = batch_size - leftover
-        for i in range(0,le,128):
-            if i ==  (epo *batch_size) : 
-                #yield np.array(encoder_input[i:]) , np.array(label[i:])
-                yield np.concatenate((t_data[i:],t_data[:sup]),axis=0) , np.concatenate((t_label[i:],t_label[:sup]),axis=0) 
-            else : 
-                yield np.array(t_data[i:i+128]) , np.array(t_label[i:i+128])
-
-
-    def eva_next_batch(self, t_emb, t_data, t_label, batch_size, shuffle=False):
-
-        le = len(t_data)
-        epo = le // batch_size
-        leftover = le - epo * batch_size
-        sup = batch_size - leftover
-
-        if shuffle : 
-            c = list(zip(t_data, t_label))
-            random.shuffle(c)
-            t_data , t_label = zip(*c)
-
-        for i in range(0, le, batch_size):
-
-            if i ==  (epo *batch_size) : 
-                yield np.array(t_emb[i:]), np.array(t_data[i:]) , np.array(t_label[i:])
-            else : 
-                yield np.array(t_embe[i: i+self.batch_size]), np.array(t_data[i: i+self.batch_size]) , np.array(t_label[i: i+self.batch_size])
-
-
-    def t_next_batch(self,t_data,t_label,batch_size=128):
-        le = len(t_data)
-        epo = le//batch_size
-        leftover = le - epo * batch_size
-        sup = batch_size - leftover
-        c = list(zip(t_data,t_label))
-        random.shuffle(c)
-        t_data , t_label = zip(*c)
-        #self.curr_learning_rate = self.init_learning_rate
-        for i in range(0,le,128):
-            c = [2,3]
-            aug = random.sample(c,1)[0]
-            if i ==  (epo *batch_size) : 
-                if aug==1 :
-                    #yield np.array(t_data[i:]) , np.array(t_label[i:]), np.array(self.batch_random_rotate_image(t_data[i:])) , np.array(t_label[i:]) ,aug
-                    yield np.concatenate((t_data[i:],t_data[:sup]),axis=0) , np.concatenate((t_label[i:],t_label[:sup]),axis=0) , np.array(self.batch_random_rotate_image(t_data[i:])+self.batch_mirror_image(t_data[:sup])),\
-                            np.concatenate((t_label[i:],t_label[:sup]),axis=0) , aug
-                elif aug == 0:
-                    #yield np.array(t_data[i:]) , np.array(t_label[i:]), np.array(self.batch_mirror_image(t_data[i:])) , np.array(t_label[i:]) , aug
-                    yield np.concatenate((t_data[i:],t_data[:sup]),axis=0) , np.concatenate((t_label[i:],t_label[:sup]),axis=0) , np.array(self.batch_mirror_image(t_data[i:])+self.batch_mirror_image(t_data[:sup])),\
-                            np.concatenate((t_label[i:],t_label[:sup]),axis=0) , aug
-                elif aug == 2:
-                    #yield np.array(t_data[i:]) , np.array(t_label[i:]), np.array(self.batch_crop_image(t_data[i:])) , np.array(t_label[i:]) , aug   
-                    yield np.concatenate((t_data[i:],t_data[:sup]),axis=0) , np.concatenate((t_label[i:],t_label[:sup]),axis=0) , np.array(self.batch_crop_image(t_data[i:])+self.batch_mirror_image(t_data[:sup])),\
-                            np.concatenate((t_label[i:],t_label[:sup]),axis=0) , aug                
-                else :
-                    yield np.concatenate((t_data[i:],t_data[:sup]),axis=0) , np.concatenate((t_label[i:],t_label[:sup]),axis=0) , np.concatenate((t_data[i:],t_data[:sup]),axis=0),\
-                            np.concatenate((t_label[i:],t_label[:sup]),axis=0) , aug   
-            else : 
-                if aug == 1:
-                    yield np.array(self.batch_crop_image(t_data[i:])+self.batch_crop_image(t_data[:sup])), np.array(t_label[i:i+128]), np.array(self.batch_random_rotate_image(t_data[i:i+128])) , np.array(t_label[i:i+128]) ,aug
-                elif aug == 0:
-                    yield np.array(t_data[i:i+128]) , np.array(t_label[i:i+128]), np.array(self.batch_mirror_image(t_data[i:i+128])) , np.array(t_label[i:i+128]) , aug
-                elif aug == 2 : 
-                    yield np.array(t_data[i:i+128]) , np.array(t_label[i:i+128]), np.array(self.batch_crop_image(t_data[i:i+128])) , np.array(t_label[i:i+128]) , aug
-                else :
-                    yield np.array(t_data[i:i+128]) , np.array(t_label[i:i+128]), np.array(t_data[i:i+128]) , np.array(t_label[i:i+128]) ,aug
-
-
-    def train_next_batch(self,t_data,t_label,batch_size=128):
-        le = len(t_data)
-        epo = le//batch_size
-        leftover = le - epo * batch_size
-        sup = batch_size - leftover
-        c = list(zip(t_data,t_label))
-        random.shuffle(c)
-        t_data , t_label = zip(*c)
-        #self.curr_learning_rate = self.init_learning_rate
-        for i in range(0,le,128):
-            if i ==  (epo *batch_size) : 
-                yield np.array(self.batch_crop_image(t_data[i:])+self.batch_crop_image(t_data[:sup])), np.concatenate((t_label[i:],t_label[:sup]),axis=0), np.array(self.batch_random_rotate_image(t_data[i:i+128])) , np.array(t_label[i:i+128]) 
-            else : 
-                yield np.array(self.batch_crop_image(t_data[i:i+128])) , np.array(t_label[i:i+128]), np.array(t_data[i:i+128]) , np.array(t_label[i:i+128]) 
-
+    # end here ****************************
 
     def plot_10slot(self,name):
         j = np.array(self.te_data[:128])
@@ -901,7 +817,7 @@ class shakenet:
         ac = accuracy_score(np.argmax(preds,axis=1),te_label)
         return ac
 
-    def predict(self,data):
+    def predict(self, data):
         if data.labels is not None : 
             assert len(data.labels.shape) > 1 , 'Labels must be one-hot encoded'
         num_classes = int(data.labels.shape[-1])
@@ -920,11 +836,8 @@ class shakenet:
             _y_pred.append(y_pred)
 
         _y_pred = np.concatenate(_y_pred, axis=0)
-
         y_true = data.labels
-
         acc = accuracy_score(np.argmax(y_true,1),np.argmax(_y_pred,1))
-
         return acc
 
 
@@ -971,7 +884,6 @@ class shakenet:
         # Note that the training data is too large so that we use the intrinsic space mapping 
         # And use the tensorflow conrtrib package to get the RFF mapping rather than hand crafting
         # More information refers to https://github.com/hichamjanati/srf  
-
         emb_list = []
         real_list = [] 
         rau = 0.00001
@@ -984,13 +896,11 @@ class shakenet:
         s_inv = np.linalg.inv(s+ rau * np.identity(a))
         #train_norm = train_matrix - train_mu
         weights = np.dot(np.dot(s_inv,emb_matrix), train_matrix)
-        print('Shape of KRR weights: {}'.format(weights.shape))
-
+        print('Shape of the KRR weight: {}'.format(weights.shape))
         return weights, mu
 
 
-    def LRR_close_form(self, emb_matrix, train_matrix, train_mu):#, compute=True):
-
+    def LRR_close_form(self, emb_matrix, train_matrix, train_mu):
         emb_list = []
         real_list = []
         count = 0 
@@ -1003,11 +913,10 @@ class shakenet:
         s_inv = np.linalg.inv(s+ rau*np.identity(h))
         #train_norm = train_matrix - train_mu
         weights = np.dot(np.dot(s_inv, emb_matrix), train_matrix)
-        print('Shape of LRR weights: {}'.format(weights.shape))
+        print('Shape of the LRR weight: {}'.format(weights.shape))
         return weights, mu
 
     def get_emb_matrix(self):
-
         train_size = self.train_set.num_examples
         num_steps = train_size // self.batch_size
         count = 0
@@ -1019,15 +928,15 @@ class shakenet:
             no = np.random.laplace(size=(self.batch_size, 32, 32, 3))
             X , y_true = self.train_set.next_batch(_batch_size, shuffle=False, augment=False, is_train=False)
             feed_dict = {self.image_p:X, self.label_p:y_true, self.is_train:False, self.noise_p:no}    
-            uu, yy = self.sess.run([self.latent, self.kernel_map], feed_dict={self.image_p:X, self.keep_prob:1, self.is_train:False})
+            compressing_representation, kernel_mapping = self.sess.run([self.latent, self.kernel_map], feed_dict=feed_dict)
 
             if count == 0 : 
-                emb_matrix_lrr = uu 
-                emb_matrix_krr = yy
+                emb_matrix_lrr = compressing_representation
+                emb_matrix_krr = kernel_mapping
                 count+=1 
             else : 
-                emb_matrix_lrr = np.concatenate((emb_matrix_lrr, uu), axis=0)
-                emb_matrix_krr = np.concatenate((emb_matrix_krr, yy), axis=0)
+                emb_matrix_lrr = np.concatenate((emb_matrix_lrr, compressing_representation), axis=0)
+                emb_matrix_krr = np.concatenate((emb_matrix_krr, kernel_mapping), axis=0)
                 count+=1     
         return emb_matrix_lrr, emb_matrix_krr 
 
@@ -1075,27 +984,6 @@ class shakenet:
         weights = np.dot(np.dot(s_inv, emb_matrix), output_norm)
         #weights = np.dot(np.dot(s_inv, emb_matrix), self.t_label)
         pred = np.dot(emb_matrix_1, weights) # + output_mu       
-        
-        '''
-        count = 0
-        for i, j in self.next_batch(self.te_data, self.te_label, self.batch_size):
-            b = i.shape[0]
-            penal = np.array([[0.5,1] for i in range(b)])
-            no = np.random.normal(size=(128, 64, 64, 3))
-            uu = self.sess.run(self.latent_concat, feed_dict={self.image_p:i.reshape(b, 64, 64, 3), self.keep_prob:1, self.is_train:False})
-            if count == 0 : 
-                emb_matrix_te = uu
-                #emb_matrix_krr = yy 
-                #if compute: 
-                #    train_matrix = i.reshape(-1, 175*175*3)
-                count+=1 
-            else : 
-                emb_matrix_te = np.concatenate((emb_matrix_te, uu), axis=0)
-                #emb_matrix_krr = np.concatenate((emb_matrix_krr, yy), axis=0)
-                #if compute: 
-                #    train_matrix = np.concatenate((train_matrix, i.reshape(-1, 175*175*3)), axis=0)
-                count+=1 
-        '''
         emb_matrix_te = rbf_feature.fit_transform(emb_matrix_te.reshape(-1, 3072))
         #emb_matrix -= mu
 
@@ -1108,8 +996,9 @@ class shakenet:
         return np.mean(mse_trace)
 
 
-    def tune(self, train_matrix, emb_matrix):
-
+    def tune_kernel_matrix(self, train_matrix, emb_matrix):
+        # Choose the best kernel parameter by tuning gamma, mapping dimension and changing the seed..
+        # This is time-consuming so that we not recommend you to use it!
         train_size = self.train_set.num_examples
         num_steps = train_size // self.batch_size
         count = 0
@@ -1174,17 +1063,16 @@ class shakenet:
             mse_record.append(mse)
 
 
-            print("Mse = {}. Parameters: is gamma, seed, mapping_dim:{}, {}, {}.".
+            print("Mse = {}. Parameters: is gamma, seed, mapping_dim:{:.3f}, {:.3f}, {:.3f}.".
                 format(mse, self.gamma, self.seed, self.mapping_dim))
 
         index = np.argmin(mse_record)
 
-        #### back to the RFF mapping and train the network with this new mapping dimension.
+        # back to the RFF mapping and train the network with this new mapping dimension.
 
-        #self.gamma = gamma_record[index]
-        #self.seed = seed_record[index]
-        #self.mapping_dim = dimension_record[index]
-
+        # self.gamma = gamma_record[index]
+        # self.seed = seed_record[index]
+        # self.mapping_dim = dimension_record[index]
 
         gamma = gamma_record[index]
         seed = seed_record[index]
@@ -1240,7 +1128,6 @@ class shakenet:
         #print('Average MSE among all testing images is {}.(KRR (empirical space)).'.format(mse))
         #feed_dict[self.emp_weights] = emp_weights
         #### ***************** 
-
 
         start = time.time()
         train_data = []
@@ -1354,9 +1241,7 @@ class shakenet:
 
 
     def train(self):
-        citers = 25
-        ### citers = 25
-        ### pywu server is 5  
+        ### our server setting is 5 for citer.  
         gen = 1
 
         train_size = self.train_set.num_examples
@@ -1383,8 +1268,8 @@ class shakenet:
 
             for i in range(len(train_data)):
                 no = np.random.laplace(size=(self.batch_size, 32, 32, 3))
-                #X , y_true = self.train_set.next_batch(self.batch_size, shuffle=True, augment=True, is_train=True)
-                #feed_dict = {self.image_p:X, self.label_p:y_true, self.is_train:True, self.learning_rate_p:self.curr_learning_rate, self.noise_p:no}
+                feed_dict = {}
+                feed_dict[self.image_p] = train_da
                 feed_dict = {self.image_p: train_data[i], self.label_p: train_label[i], self.is_train:True, self.learning_rate_p:lr[i], self.noise_p:no}
                 for _ in range(gen):
 
@@ -1463,13 +1348,9 @@ class shakenet:
             #print(shape)
             current_nb_params = self.get_nb_params_shape(shape)
             tot_nb_params = tot_nb_params + current_nb_params
-
         return tot_nb_params
 
-    #def count_operation(self, shape):
-    #    k , l = shape
-
-    def get_nb_params_shape(self,shape):
+    def get_nb_params_shape(self, shape):
         '''
         Computes the total number of params for a given shap.
         Works for any number of shapes etc [D,F] or [W,H,C] computes D*F and W*H*C.

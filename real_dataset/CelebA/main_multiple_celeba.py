@@ -19,16 +19,17 @@ if __name__ == '__main__':
 	parser.add_argument('--gamma', type=float, default=1, help='Variance of the kernel function')
 	parser.add_argument('--seed', type=int, default=1, help='The sampled weights of the RFF mapping')
 	parser.add_argument('--mapping_dim', type=int, default=5000, help='Dimension of the intrinsic space')
+	
 	args = parser.parse_args()
 	print(args)
 	
     if args.train:
-        import celeba_multi_r 
-        model = celeba_multi_r.cpgan(args)
+        import multi_celeba as mc 
+        model = mc.cpgan(args)
         model.train()
     elif args.test: 
-        import celeba_multi_r 
-        model = celeba_multi_r.cpgan(args)
+        import multi_celeba as mc  
+        model = mc.cpgan(args)
         model.test()
     else:
     	raise ValueError("Plear input correct args !!!")

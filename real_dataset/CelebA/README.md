@@ -29,29 +29,35 @@
 
   <center> <img src="img/multi_celeba_new.png" width="450" height="200"></center>
 
-  The first row of each figure consists of randomly sampled original images.  The second row consists of the reconstructed images assuming the adversary acquires the original image.  The last row consists of the images reconstructed from the compressing representations under white-box attack: 
+  The first row of each figure consists of randomly sampled original images.  The second row consists of the reconstructed images assuming the adversary acquires the original image.  The last row consists of the images reconstructed from the compressing representations under white-box attack.
 
 - Utility Accuracy:
 
   **Single task**
 
-| Model     | Accuracy (%) |
-| :-:       | :-:      |
-| LNets+ANets | 87.30 |
-| Zhong | 89.97   |
-| CPGAN | 89.92   |
+  | Model     | Accuracy (%) |
+  | :-:       | :-:      |
+  | LNets+ANets | 87.30 |
+  | Zhong | 89.97   |
+  | CPGAN | 89.92   |
 
-​		**Multi task**
+  **Multi task**
 
-| Model     | Accuracy (%) |
-| :-:       | :-:      |
-| Han | 92.52   |
-| ATNET_GT | 90.18    |
-| CPGAN   | 90.30   |
+  | Model     | Accuracy (%) |
+  | :-:       | :-:      |
+  | Han | 92.52   |
+  | ATNET_GT | 90.18    |
+  | CPGAN   | 90.30   |
 
-## Execution
+
+
+# Execution 
 
 ```
-bash compile.sh
+python main_multiple_celeba.py --train True --data_dir "Your Path" --label_dir "Your path"
 ```
-Note that you can tune different parameters defined in the "main" file.
+```
+python main_single_celeba.py --train True --data_dir "Your Path" --label_dir "Your path"
+```
+
+The rest of the argument are not listed here, if you want to tune the parameters, please refer to the the file, which start with "main".
