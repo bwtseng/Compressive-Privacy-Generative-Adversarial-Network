@@ -30,12 +30,12 @@ if __name__ == '__main__':
     print(args)
 
     if args.train:
-        import celeba_0
-        model = celeba_0.CPGAN(args)
+        import single_celeba as sc
+        model = sc.CPGAN(args)
         model.train()
     elif args.test: 
-        import celeba_0
-        model = celeba_0.CPGAN(args)     
+        import single_celeba
+        model = sc.CPGAN(args)     
         model.test()
     else:
     	raise ValueError("Plear input correct args !!!")
