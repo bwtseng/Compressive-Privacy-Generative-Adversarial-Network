@@ -1,37 +1,56 @@
+
+
+
+
 # CelebA Dataset
-## **Data Information**
+
+## CelebA Dataset Info.
+
 - Please refer to the [link](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html)
-- Use facenet source (refer to the folder "understand facenet") code to align and crop the images.
+- We already summarized the label information and saved it as the csv file (All_label.csv).
+- Leverage facenet open source code to align and crop the facial images. Note that we upload it as the "understand facenet" folder, which includes all the instruction about how to use the original Facnet repository. 
 
-## **Experimental Detail**
+## Evaluation Metrics
+
 - Adopt classification accuracy as the utility evaluation metric.
-- Privacy is evaluated by qualitative results (i.e. reconstructed images).
+- Privacy is evaluated by qualitative results, that is, we evaluate the quality of the reconstructed images under human perception, as there is no fair comparison in the literature using the mean square loss.
 
-## **Empirical Results**
+## Empirical Results
 
-### Reconstructed images from single task CPGAN.
-- The first row consists of the original images sampled from CIFAR-10 dataset, second row consists of the reconstructed images assuming that privatizer is identity function, and the last row consists of the images reconstructed images from the compressing representations.
+- Reconstructions:
 
-![image](https://github.com/R06942098/CPGAN/blob/master/CelebA/img/single_celeba_res.png)
+   **Single task** 
 
-| Model     | Accuracy |
-| ---       | ---      |
-| LNets+ANets | 87.30% |
-| Zhong | 89.97%   |
-| CPGAN | 89.92%   |
+  <center> <img src="img/single_celeba_res.png" width="450" height="200"></center>
 
-### Reconstructed images from multi task CPGAN.
-- The first row consists of the original images sampled from CIFAR-10 dataset, second row consists of the reconstructed images assuming that privatizer is identity function, and the last row consists of the images reconstructed images from the compressing representations.
+   **Multi task** 
 
-![image](https://github.com/R06942098/CPGAN/blob/master/CelebA/img/multi_celeba_new.png)
+  
 
-| Model     | Accuracy |
-| ---       | ---      |
-| Han | 92.52%   |
-| ATNET_GT | 90.18%    |
-| CPGAN   | 90.30%   |
+  <center> <img src="img/multi_celeba_new.png" width="450" height="200"></center>
 
-## **Excecution**
+  The first row of each figure consists of randomly sampled original images.  The second row consists of the reconstructed images assuming the adversary acquires the original image.  The last row consists of the images reconstructed from the compressing representations under white-box attack: 
+
+- Utility Accuracy:
+
+  **Single task**
+
+| Model     | Accuracy (%) |
+| :-:       | :-:      |
+| LNets+ANets | 87.30 |
+| Zhong | 89.97   |
+| CPGAN | 89.92   |
+
+​		**Multi task**
+
+| Model     | Accuracy (%) |
+| :-:       | :-:      |
+| Han | 92.52   |
+| ATNET_GT | 90.18    |
+| CPGAN   | 90.30   |
+
+## Execution
+
 ```
 bash compile.sh
 ```
