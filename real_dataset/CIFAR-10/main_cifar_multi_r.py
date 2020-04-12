@@ -15,7 +15,7 @@ if __name__ == '__main__':
 	parser.add_argument('--citer', type=int, default=25, help='Adversary iteration')
 	parser.add_argument('--mapping_dim', type=int, default=5000, help='Dimension of the intrinsic space')
 	parser.add_argument('--model_dir', type=str, default='/path/to/your/trained_model', help='Pre-trained model path.')
-	parser.add_argument('--name', type=str, default='multi-task-celeba')
+	parser.add_argument('--name', type=str, default='cifar10')
 	parser.add_argument('--lr', type=int, default=0.2, help='Initial learning rate')
 	parser.add_argument('--trade_off', type=int, default=10, help='Trade-off parameter between privacy and utility.')
 	args = parser.parse_args()

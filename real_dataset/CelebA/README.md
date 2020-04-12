@@ -35,23 +35,29 @@
 
   **Single task**
 
-| Model     | Accuracy (%) |
-| :-:       | :-:      |
-| LNets+ANets | 87.30 |
-| Zhong | 89.97   |
-| CPGAN | 89.92   |
+  | Model     | Accuracy (%) |
+  | :-:       | :-:      |
+  | LNets+ANets | 87.30 |
+  | Zhong | 89.97   |
+  | CPGAN | 89.92   |
 
-​		**Multi task**
+  **Multi task**
 
-| Model     | Accuracy (%) |
-| :-:       | :-:      |
-| Han | 92.52   |
-| ATNET_GT | 90.18    |
-| CPGAN   | 90.30   |
+  | Model     | Accuracy (%) |
+  | :-:       | :-:      |
+  | Han | 92.52   |
+  | ATNET_GT | 90.18    |
+  | CPGAN   | 90.30   |
 
-## Execution
+
+
+# Execution 
 
 ```
-bash compile.sh
+python main_multiple_celeba.py --train True --data_dir "Your Path" --label_dir "Your path"
 ```
-Note that you can tune different parameters defined in the "main" file.
+```
+python main_single_celeba.py --train True --data_dir "Your Path" --label_dir "Your path"
+```
+
+The rest of the argument are not listed here, if you want to try different parameters, please refer to the the files, in which the name start with "main".

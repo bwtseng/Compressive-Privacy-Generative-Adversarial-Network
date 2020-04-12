@@ -19,6 +19,7 @@ if __name__ == '__main__':
 	parser.add_argument('--gamma', type=float, default=1, help='Variance of the kernel function')
 	parser.add_argument('--seed', type=int, default=1, help='The sampled weights of the RFF mapping')
 	parser.add_argument('--mapping_dim', type=int, default=5000, help='Dimension of the intrinsic space')
+	parser.add_argument('--epoch', default=15, type=int)
 	
 	args = parser.parse_args()
 	print(args)

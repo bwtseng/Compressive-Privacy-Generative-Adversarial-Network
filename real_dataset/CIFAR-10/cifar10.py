@@ -748,10 +748,7 @@ class shakenet:
 		count = 1
 		""" 
 		***************************************
-		### Server may exist the pretrained model.
-		self.saver.restore(self.sess,'cpgan_log/model_1297')
-		self.sess.run(self.assign_op)
-		self.saver.restore(self.sess,'cpgan_log/model_237')
+		Server xist the pretrained model (ckpt file model_1798)
 		***************************************
 		""" 
 		for i in range(num_steps):
