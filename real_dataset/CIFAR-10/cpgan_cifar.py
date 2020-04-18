@@ -21,14 +21,11 @@ from sklearn.kernel_approximation import RBFSampler
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics import mean_squared_error
 from numpy.linalg import pinv 
-
-
 tf.set_random_seed(9)
 np.random.seed(9)
 plt.switch_backend('agg')
 
-class shakenet:
-
+class CPGAN:
     def __init__(self,arg):
         self.arg = arg
         self.batch_size = 128
@@ -703,9 +700,7 @@ class shakenet:
         tf.set_random_seed(9)
         np.random.seed(9)
         in_depth = int(x.get_shape()[-1])
-
         filters = self.weight_variable([side_l, side_l, in_depth, out_depth])
-          
         return self.conv2d(x, filters, stride, padding=padding)
 
     def fc_layer(self,x, out_dim, **kwargs):
@@ -720,7 +715,8 @@ class shakenet:
     def batch_norm(self,x, is_training, momentum=0.9, epsilon=0.00001):
         tf.set_random_seed(9)
         #np.random.seed(9)
-        x = tf.layers.batch_normalization(x, momentum=momentum, epsilon=epsilon ,training=is_training)
+        x = tf.layers.batch_normalization(x, momentum=momentum, epsilon=epsilon ,
+                                          training=is_training)
         return x
 
     # This function is replaced by the scirpt "data.py." 
@@ -751,18 +747,13 @@ class shakenet:
             reflection = bool(np.random.randint(2))
             if reflection :
                 img = np.fliplr(img)
-
             image_pad = np.pad(img,((4,4),(4,4),(0,0)),mode='constant')
-
             crop_x1 = random.randint(0,8)
             crop_x2 = crop_x1 + 32
-
             crop_y1 = random.randint(0,8)
             crop_y2 = crop_y1 + 32
-
             image_crop = image_pad[crop_x1:crop_x2,crop_y1:crop_y2]
             a.append(image_crop)
-
         return a
     # End here
     
@@ -771,7 +762,7 @@ class shakenet:
         label = np.array([i for i in range(10)])
         no = np.random.normal(size=(10, 32, 32, 3))
         feed_dict = {}
-        feed_dict[self.image_p] = j.reshape(10, 32, 32, 3)
+        feed_dict[self.image_p] = data.reshape(10, 32, 32, 3)
         feed_dict[self.label_p] = label
         feed_dict[self.is_train] = False
         compressing_representation = self.sess.run(self.latent, feed_dict=feed_dict)
@@ -790,7 +781,7 @@ class shakenet:
             plt.imshow(self.plot(reconstructions[i]))
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
-        plt.savefig('reconstructed_image'+str(name))
+        plt.savefig('Reconstructed_image_cifar10'+)
 
     def plot(self, x):
         #cifar_mean = np.array([0.4914, 0.4822, 0.4465])
@@ -805,11 +796,9 @@ class shakenet:
     def compute_reco_mse(self, data):
 
         # Assign all the weights !!!!! 
-
         error_nn = []
         error_lrr = []
         error_krr = []
-
         num_classes = int(data.labels.shape[-1])
         pred_size = data.num_examples
         num_steps = pred_size // self.batch_size
@@ -821,10 +810,13 @@ class shakenet:
                 _batch_size = self.batch_size
             no = np.random.laplace(size=(_batch_size,32,32,3))   
             X , _ = data.next_batch(_batch_size, shuffle=False, augment=False, is_train=False)
-            up_nn = self.sess.run(self.recon_nn, feed_dict={self.image_p:X, self.is_train:False, self.noise_p:no})
-            up_lrr = self.sess.run(self.recon_lrr, feed_dict={self.image_p:X, self.noise_p:no, self.is_train:False})
-            up_krr = self.sess.run(self.recon_krr, feed_dict={self.image_p:X, self.noise_p:no, self.is_train:False})
-
+            feed_dict = {}
+            feed_dict[self.image_p] = X
+            feed_dict[self.is_train] = False
+            feed_dict[self.noise_p] = no
+            up_nn = self.sess.run(self.recon_nn, feed_dict=feed_dict)
+            up_lrr = self.sess.run(self.recon_lrr, feed_dict=feed_dict)
+            up_krr = self.sess.run(self.recon_krr, feed_dict=feed_dict)
             for k in range(len(up_nn)):
                 error_nn.append(mean_squared_error(X[k].flatten(), up_nn[k].flatten())) 
                 error_lrr.append(mean_squared_error(X[k].flatten(), up_lrr[k].flatten()))#+train_mu)) 
@@ -850,8 +842,7 @@ class shakenet:
         s_inv = np.linalg.inv(s+ rau * np.identity(a))
         #train_norm = train_matrix - train_mu
         weights = np.dot(np.dot(s_inv,emb_matrix), train_matrix)
-        print('Shape of KRR weights: {}'.format(weights.shape))
-
+        print('Shape of the KRR weights: {}'.format(weights.shape))
         return weights, mu
 
 
@@ -869,7 +860,7 @@ class shakenet:
         s_inv = np.linalg.inv(s+ rau*np.identity(h))
         #train_norm = train_matrix - train_mu
         weights = np.dot(np.dot(s_inv, emb_matrix), train_matrix)
-        print('Shape of LRR weights: {}'.format(weights.shape))
+        print('Shape of the LRR weights: {}'.format(weights.shape))
         return weights, mu
 
     def get_emb_matrix(self):
@@ -950,12 +941,12 @@ class shakenet:
 
     def train(self):
         citers = self.arg.citer
-        ### citers = 25
-        ### our server setting may be 5.  
+        # citers = 25
+        # our server setting may be 5.  
         gen = 1
 		""" 
 		***************************************
-		Server xist the pretrained model (ckpt file model_1798)
+		Server has the pretrained model (ckpt file model_1798)
 		***************************************
 		""" 
         train_size = self.train_set.num_examples
@@ -1067,7 +1058,7 @@ class shakenet:
                 _batch_size = pred_size - num_steps * self.batch_size
             else : 
                 _batch_size = self.batch_size
-            no = np.random.laplace(size=(_batch_size,32,32,3))
+            no = np.random.laplace(size=(_batch_size, 32, 32, 3))
             X, _ = data.next_batch(_batch_size, shuffle=False, augment=False, is_train=False)
             y_pred = self.sess.run(self.prob, feed_dict={self.image_p:X, self.is_train:False, self.noise_p:no})
             _y_pred.append(y_pred)

@@ -20,7 +20,6 @@ from sklearn.kernel_approximation import RBFSampler
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
-
 plt.switch_backend('agg')
 class wrs:
     def __init__(self,arg):
@@ -410,21 +409,32 @@ class wrs:
             #print(x)
             return x 
 
-    def generator_conv(self,image,reuse=False):
+    def generator_conv(self, image, reuse=False):
         dim = 32
         with tf.variable_scope('compressor') as scope:
             if reuse : 
                 scope.reuse_variables()
-            conv1 = ly.conv2d(image,dim*1,kernel_size=3,stride=1,padding='SAME',activation_fn=tf.nn.leaky_relu,weights_initializer=tf.random_normal_initializer(0, 0.02))#,normalizer_fn=ly.batch_norm)
-            conv1 = self.bo_batch_norm(conv1,self.is_train)
-            conv2 = ly.conv2d(conv1,dim*2,kernel_size=3,stride=1,padding='SAME',activation_fn=tf.nn.leaky_relu,weights_initializer=tf.random_normal_initializer(0, 0.02))#,normalizer_fn=ly.batch_norm)
-            conv2 = self.bo_batch_norm(conv2,self.is_train)
-            conv3 = ly.conv2d(conv2,dim*4,kernel_size=3,stride=1,padding='SAME',activation_fn=tf.nn.leaky_relu,weights_initializer=tf.random_normal_initializer(0, 0.02))#,normalizer_fn=ly.batch_norm)
-            conv4 = self.bo_batch_norm(conv3,self.is_train)
-            conv4 = ly.conv2d(conv3,dim*8,kernel_size=3,stride=1,padding='SAME',activation_fn=tf.nn.leaky_relu,weights_initializer=tf.random_normal_initializer(0, 0.02))#,normalizer_fn=ly.batch_norm)
-            conv4 = self.bo_batch_norm(conv4,self.is_train)
-            latent = ly.conv2d(conv4,3,kernel_size=3,stride=1,padding='SAME',activation_fn=tf.nn.leaky_relu,weights_initializer=tf.random_normal_initializer(0, 0.02))#,normalizer_fn=ly.batch_norm)
-            #latent = ly.fully_connected(tf.reshape(conv4,shape=[-1,7*7*dim*8]),2,activation_fn=tf.nn.leaky_relu)
+            conv1 = ly.conv2d(image,dim*1, kernel_size=3, stride=1, padding='SAME',
+                              activation_fn=tf.nn.leaky_relu,
+                              weights_initializer=tf.random_normal_initializer(0, 0.02))
+            conv1 = self.bo_batch_norm(conv1, self.is_train)
+            conv2 = ly.conv2d(conv1,dim*2, kernel_size=3, stride=1, padding='SAME', 
+                              activation_fn=tf.nn.leaky_relu, 
+                              weights_initializer=tf.random_normal_initializer(0, 0.02))
+            conv2 = self.bo_batch_norm(conv2, self.is_train)
+            conv3 = ly.conv2d(conv2,dim*4, kernel_size=3,stride=1, padding='SAME', 
+                              activation_fn=tf.nn.leaky_relu, 
+                              weights_initializer=tf.random_normal_initializer(0, 0.02))
+            conv4 = self.bo_batch_norm(conv3, self.is_train)
+            conv4 = ly.conv2d(conv3,dim*8, kernel_size=3, stride=1, padding='SAME',
+                              activation_fn=tf.nn.leaky_relu, 
+                              weights_initializer=tf.random_normal_initializer(0, 0.02))
+            conv4 = self.bo_batch_norm(conv4, self.is_train)
+            latent = ly.conv2d(conv4,3, kernel_size=3, stride=1, padding='SAME', 
+                               activation_fn=tf.nn.leaky_relu, 
+                               weights_initializer=tf.random_normal_initializer(0, 0.02))
+            #latent = ly.fully_connected(tf.reshape(conv4, shape=[-1,7*7*dim*8]), self.arg.com, 
+            #                            activation_fn=tf.nn.leaky_relu)
             print(latent)
         return latent 
 
@@ -432,16 +442,20 @@ class wrs:
         with tf.variable_scope('adversary_lrr') as scope:  
             if reuse: 
                 scope.reuse_variables()
-            recontruction = ly.fully_connected(latent, 32*32*3, activation_fn=None, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer = None)
+            recontruction = ly.fully_connected(latent, 32*32*3, activation_fn=None, 
+                                               weights_initializer=tf.contrib.layers.xavier_initializer(), 
+                                               biases_initializer = None)
         return tf.reshape(recontruction, shape=[-1, 32, 32, 3])
 
 
     def adversary_krr(self, kernel_map, reuse=False):
-        #final_latent = tf.concat([latent, latent_1], axis=1)
         with tf.variable_scope('adversary_krr') as scope:  
             if reuse: 
                 scope.reuse_variables()
-            recontruction = ly.fully_connected(kernel_map, 32*32*3, activation_fn=None, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer = None)
+            recontruction = ly.fully_connected(kernel_map, 32*32*3, 
+                                               activation_fn=None, 
+                                               weights_initializer=tf.contrib.layers.xavier_initializer(), 
+                                               biases_initializer = None)
         return tf.reshape(recontruction, shape=[-1, 32, 32, 3])
 
     def adversary_nn(self,latent,reuse=False):
@@ -452,8 +466,7 @@ class wrs:
             latent = ly.flatten(latent)
             latent = ly.fully_connected(latent, 4*4*64, activation_fn=tf.nn.relu)
             latent = self.bo_batch_norm(latent, self.is_train)
-            latent = tf.reshape(latent, shape=[-1,4,4,64])
-            #latent = tf.reshape(latent, shape=[-1, 4, 4, 32])
+            latent = tf.reshape(latent, shape=[-1, 4, 4, 64])
             upsample1 = ly.conv2d_transpose(latent, dim*4, kernel_size=3, stride=2, padding='SAME',
                                                 activation_fn=tf.nn.relu, 
                                                 weights_initializer=tf.random_normal_initializer(0, 0.02))
@@ -465,24 +478,20 @@ class wrs:
             upsample6 = ly.conv2d_transpose(upsample2, 3, kernel_size=3, stride=2, padding='SAME',
                                                 activation_fn=tf.nn.tanh,
                                                 weights_initializer=tf.random_normal_initializer(0, 0.02))
-        abs
         return upsample6 
 
     def RFF_map(self, input_tensor, seed, stddev, output_dim): 
+        """
+        Refer to the scikit learn package "RFF sampler" and tensorflow RFF mapping.
+        """
 
-        #input_tensor = tf.concat([input_tensor_1, input_tensor_2], axis=1)
-        #print("Information that the adversary can get: {}".format(input_tensor))
-
-
-        #seed  = 9
         random_state = check_random_state(seed)
-        #np.random.seed(9)
-        #self._stddev = stddev
         gamma = stddev
         omega_matrix_shape = [3072, output_dim]
         bias_shape = [output_dim]
+        """
+        Tensorflow Version is elaborated below:
 
-        '''
         np.random.seed(9)
         self._stddev = stddev
         omega_matrix_shape = [self.arg.dim*2, output_dim]
@@ -500,10 +509,10 @@ class wrs:
 
         x_omega_plus_bias = math_ops.add(
             math_ops.matmul(input_tensor, omega_matrix), bias)
-        '''
+        """
 
         omega_matrix = constant_op.constant(np.sqrt(2 * gamma) *
-           random_state.normal(size=omega_matrix_shape),dtype=dtypes.float32)
+           random_state.normal(size=omega_matrix_shape), dtype=dtypes.float32)
 
         bias = constant_op.constant(
             random_state.uniform(
@@ -516,8 +525,7 @@ class wrs:
 
 
     def build_model(self):
-
-        ### Input placeholdr
+        # Input placeholdr
         self.image_p = tf.placeholder(tf.float32, shape=[None,32,32,3])
         self.label_p = tf.placeholder(tf.int64, shape=[None])
         self.is_train = tf.placeholder(tf.bool)
@@ -525,13 +533,14 @@ class wrs:
         self.dropout = tf.placeholder(tf.float32)
         self.one_hot = tf.one_hot(self.label_p, 10)
 
-        ### Privatizer 
+        # Privatizer 
         self.latent = self.residual_g(self.image_p)
 
-        ### Classifier 
+        # Classifier 
         self.logit = self.wrs_16_2(self.latent)
         self.prob = tf.nn.softmax(self.logit)
-        ### Adversary
+
+        # Adversary
         self.latent = ly.flatten(self.latent)
         self.lrr_mu_p = tf.placeholder(tf.float32, shape=[3072])
         self.krr_mu_p = tf.placeholder(tf.float32, shape=[self.mapping_dim])
@@ -542,7 +551,8 @@ class wrs:
         self.krr_mu = self.init_tensor([self.mapping_dim])  
         self.t_mu = self.init_tensor([3072])
 
-        ### Center-adjust or not.
+        # Center-adjusted code, refering from Kung's book. 
+        # If it is needed, please remove the comment symbol.
         #self.latent_lrr = self.latent - self.lrr_mu
         self.kernel_map = self.RFF_map(self.latent, self.seed, self.gamma, self.mapping_dim)
         #self.kernel_map_deduct = self.kernel_map - self.krr_mu
@@ -554,8 +564,7 @@ class wrs:
         #self.recon_lrr = self.recon_lrr + tf.reshape(self.t_mu, [32,32,3])
         #self.recon_krr = self.recon_krr + tf.reshape(self.t_mu, [32,32,3])
 
-
-        self.acc = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(self.prob,1),self.label_p),tf.float32))
+        self.acc = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(self.prob,1), self.label_p), tf.float32))
         utility_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.logit, labels=self.one_hot))
         self.loss_c = utility_loss 
         self.loss_r_nn = tf.losses.mean_squared_error(self.image_p, self.recon_nn) 
@@ -577,7 +586,9 @@ class wrs:
         print('The numbers of parameters in variable_scope G are : {}'.format(self.count_number_trainable_params(self.theta_g)))
         print('The numbers of parameters in variable_scope R are : {}'.format(self.count_number_trainable_params(self.theta_c)))
 
-        ### Assign operation  ********************************
+        # ****************
+        # Assign operation
+        # ****************  
         self.assign_op = []
         assign_lrr = self.theta_r_lrr[0].assign(self.lrr_weights)
         self.assign_op.append(assign_lrr)
@@ -616,8 +627,10 @@ class wrs:
         self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
         self.saver = tf.train.Saver()
-
-    def batch_random_rotate_image(self,image):
+    
+    # We don't use the augumentation mechanism in our implementation, thus, these three
+    # functions are no longer used.
+    def batch_random_rotate_image(self, image):
         angle = np.random.uniform(low=-5.0, high=5.0)
         a = []
         for i in image:
@@ -645,67 +658,29 @@ class wrs:
             image = image 
         for i in image : 
             image_pad = np.pad(i,((4,4),(4,4),(0,0)),mode='constant')
-
             crop_x1 = random.randint(0,8)
             crop_x2 = crop_x1 + 32
-
             crop_y1 = random.randint(0,8)
             crop_y2 = crop_y1 + 32
-
             image_crop = image_pad[crop_x1:crop_x2,crop_y1:crop_y2]
             a.append(image_crop)
         return a
+    # End here.
 
-    def next_batch(self, t_data, t_label, batch_size):
-        le = len(t_data)
-        epo = le//batch_size
-        leftover = le - epo * batch_size
-        sup = batch_size - leftover
-        for i in range(0,le, batch_size):
-            if i ==  (epo *batch_size) : 
-                yield np.array(t_data[i:]) , np.array(t_label[i:])
+    def next_batch(self, data, label, shuffle=False, batch_size=256):
+        data_size = len(data)
+        iteration = data_size // batch_size
+        data_rest_num = data_size - iteration * batch_size
+        if shuffle:
+            data_zip = list(zip(data, label))
+            random.shuffle(data_zip)
+            data, label = zip(*data_zip)
+        for i in range(0, data_size, batch_size):
+            if i ==  (iteration *batch_size) : 
+                yield np.array(data[i:]) , np.array(label[i:])
             else : 
-                yield np.array(t_data[i:i+batch_size]) , np.array(t_label[i:i+batch_size])
+                yield np.array(data[i: i+batch_size]) , np.array(label[i: i+batch_size])
 
-    def t_next_batch(self, t_data, t_label, batch_size):
-
-        le = len(t_data)
-        epo = le//batch_size
-        leftover = le - epo * batch_size
-        sup = batch_size - leftover
-        ## Shuffle the batch data.
-        c = list(zip(t_data,t_label))
-        random.shuffle(c)
-        t_data , t_label = zip(*c)
-        for i in range(0, le, batch_size):
-            c = [0,1,2,3]
-            aug = random.sample(c,1)[0]
-            if i ==  (epo *batch_size) : 
-                if aug==1 :
-                    yield np.array(t_data[i:]) , np.array(t_label[i:]), np.array(self.batch_random_rotate_image(t_data[i:])) , np.array(t_label[i:]) ,aug
-                    #yield np.concatenate((t_data[i:],t_data[:sup]),axis=0) , np.concatenate((t_label[i:],t_label[:sup]),axis=0) , np.array(self.batch_random_rotate_image(t_data[i:])+self.batch_mirror_image(t_data[:sup])),\
-                    #        np.concatenate((t_label[i:],t_label[:sup]),axis=0) , aug
-                elif aug == 0:
-                    yield np.array(t_data[i:]) , np.array(t_label[i:]), np.array(self.batch_mirror_image(t_data[i:])) , np.array(t_label[i:]) , aug
-                    #yield np.concatenate((t_data[i:],t_data[:sup]),axis=0) , np.concatenate((t_label[i:],t_label[:sup]),axis=0) , np.array(self.batch_mirror_image(t_data[i:])+self.batch_mirror_image(t_data[:sup])),\
-                    #        np.concatenate((t_label[i:],t_label[:sup]),axis=0) , aug
-                elif aug == 2:
-                    yield np.array(t_data[i:]) , np.array(t_label[i:]), np.array(self.batch_crop_image(t_data[i:])) , np.array(t_label[i:]) , aug   
-                    #yield np.concatenate((t_data[i:],t_data[:sup]),axis=0) , np.concatenate((t_label[i:],t_label[:sup]),axis=0) , np.array(self.batch_crop_image(t_data[i:])+self.batch_mirror_image(t_data[:sup])),\
-                    #        np.concatenate((t_label[i:],t_label[:sup]),axis=0) , aug                
-                else :
-                    yield np.array(t_data[i:]) , np.array(t_label[i:]), np.array(self.batch_crop_image(t_data[i:])) , np.array(t_label[i:]) , aug               
-                    #yield np.concatenate((t_data[i:],t_data[:sup]),axis=0) , np.concatenate((t_label[i:],t_label[:sup]),axis=0) , np.concatenate((t_data[i:],t_data[:sup]),axis=0),\
-                    #        np.concatenate((t_label[i:],t_label[:sup]),axis=0) , aug   
-            else : 
-                if aug == 1:
-                    yield np.array(t_data[i:i+batch_size]) , np.array(t_label[i:i+batch_size]), np.array(self.batch_random_rotate_image(t_data[i:i+batch_size])) , np.array(t_label[i:i+batch_size]) ,aug
-                elif aug == 0:
-                    yield np.array(t_data[i:i+batch_size]) , np.array(t_label[i:i+batch_size]), np.array(self.batch_mirror_image(t_data[i:i+batch_size])) , np.array(t_label[i:i+batch_size]) , aug
-                elif aug == 2 : 
-                    yield np.array(t_data[i:i+batch_size]) , np.array(t_label[i:i+batch_size]), np.array(self.batch_crop_image(t_data[i:i+batch_size])) , np.array(t_label[i:i+batch_size]) , aug
-                else :
-                    yield np.array(t_data[i:i+batch_size]) , np.array(t_label[i:i+batch_size]), np.array(t_data[i:i+batch_size]) , np.array(t_label[i:i+batch_size]) ,aug
  
     def compute_acc(self, te_data, te_label, is_train=False):
         acc_list = []
@@ -725,8 +700,6 @@ class wrs:
         h = img.shape[0]
         w = img.shape[1]
         mask = np.ones((h, w), np.float32)
-
-
         for n in range(n_holes):
 
             y = np.random.randint(h)
@@ -1083,6 +1056,7 @@ class wrs:
         train_matrix = self.get_train_matrix()
         train_mu = np.mean(train_matrix, axis=0)
 
+
         #update_choice = [self.g_opt_nn, self.g_opt_lrr, self.g_opt_krr]
 
         ### original inner loops for citers is 5 !!!! 
@@ -1090,10 +1064,29 @@ class wrs:
 
         citers = 5
 
-        for epo in range(epochs) : 
+        for epo in range(self.arg.epoch) : 
             train_data = []
             train_label = [] 
             start = time.time()
+            for batch_x, batch_y in self.next_batch(self.t_data, self.t_label):
+                feed_dict = {}
+                b = batch_x.shape[0]
+                no = np.random.normal(size=(b, 32, 32, 3))
+                feed_dict[self.image_p] = batch_x.reshape(-1, 32, 32, 3)
+                feed_dict[self.label_p] = batch_y
+                feed_dict[self.is_train] = True
+                feed_dict[self.dropout] = 0.4
+                feed_dict[self.learning_rate_p] = cur_lr
+                if self.arg.cut_out :
+                    l = []
+                    for qq in i : 
+                        l.append(self.cutout(qq, 1, 20))
+                    feed_dict[self.image_p] = np.array(l).reshape(-1, 32, 32, 3)
+
+                for _ in range(self.arg.citer):
+                    _ = self.sess.run(self.r_opt, feed_dict = feed_dict)
+                c_loss, _ = self.sess.run([self.loss_c, self.c_opt], feed_dict = feed_dict)
+                
             optimize_g, feed_dict, train_data, train_label = self.assign(train_matrix, train_mu, epo)
             for ind in range(len(train_data)):
                 feed_dict[self.image_p] = train_data[ind]
@@ -1119,13 +1112,9 @@ class wrs:
                 cur_lr = 0.00001
 
             count +=1
-                
             at_acc = self.compute_acc(self.te_data, self.te_label)#, is_train=True)
-
             ac_acc = self.compute_acc(self.v_data, self.v_label)
-
             print("Validation accuracy: {}, testing accuracy: {}.".format(ac_acc, at_acc))
-
             if epo %10 == 0:
                 self.saver.save(self.sess,'model_'+str(epo+1))
                 self.save_g()
@@ -1267,15 +1256,6 @@ class wrs:
         for dim in shape:
             nb_params = nb_params*int(dim)
         return nb_params 
-
-
-
-
-
-
-
-
-
 
 
 

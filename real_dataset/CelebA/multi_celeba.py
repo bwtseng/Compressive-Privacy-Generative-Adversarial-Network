@@ -1055,7 +1055,7 @@ class CPGAN:
         if shuffle:
             data_zip = list(zip(data, label))
             random.shuffle(data_zip)
-            data , label = zip(*data_zip)
+            data, label = zip(*data_zip)
         for i in range(0, data_size, batch_size):
             if i ==  (epo *batch_size) : 
                 label40__list = [[] for i in range(40)]
