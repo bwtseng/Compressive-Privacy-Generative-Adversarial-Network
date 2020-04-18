@@ -677,22 +677,27 @@ class wrs:
             data, label = zip(*data_zip)
         for i in range(0, data_size, batch_size):
             if i ==  (iteration *batch_size) : 
-                yield np.array(data[i:]) , np.array(label[i:])
+                yield np.array(data[i:]), np.array(label[i:])
             else : 
-                yield np.array(data[i: i+batch_size]) , np.array(label[i: i+batch_size])
+                yield np.array(data[i: i+batch_size]), np.array(label[i: i+batch_size])
 
  
-    def compute_acc(self, te_data, te_label, is_train=False):
+    def compute_acc(self, data, label):
         acc_list = []
-        for j , k in self.next_batch(te_data,te_label, self.batch_size):
-            b = k.shape[0]
-            no = np.random.normal(size=(b,32,32,3))
-            pred = self.sess.run(self.prob,feed_dict={self.image_p:j.reshape(b,32,32,3),self.label_p:k,self.is_train:False,self.dropout:1})
+        for batch_x, batch_y in self.next_batch(data, label, shuffle=False, batch_size=self.arg.batch_size):
+            b = batch_x.shape[0]
+            no = np.random.normal(size=(b, 32, 32, 3))
+            feed_dict = {}
+            feed_dict[self.image_p] = batch_x.reshape(b, 32, 32, 3)
+            feed_dict[self.label_p] = k
+            feed_dict[self.is_train] = False
+            feed_dict[self.dropout] = 1.0
+            pred = self.sess.run(self.prob, feed_dict=feed_dict)
             acc_list.append(pred)
-        preds = np.concatenate((acc_list),axis=0)
-        tttt = len(te_data)
-        preds = preds[0:tttt]   
-        ac = accuracy_score(np.argmax(preds, axis=1), te_label)
+        preds = np.concatenate((acc_list), axis=0)
+        data_size = len(te_data)
+        preds = preds[0:data_size]   
+        ac = accuracy_score(np.argmax(preds, axis=1), label)
         return ac
 
     def cutout(self,img,n_holes,length):
@@ -726,24 +731,25 @@ class wrs:
         error_lrr = []
         error_krr = []
         ### change to next batch function 
-        for i,j in self.next_batch(val_data, val_label, self.batch_size):
-            no = np.random.laplace(size=(self.batch_size, 32, 32, 3))   
-            b = i.shape[0]
-            up_nn = self.sess.run(self.recon_nn, feed_dict={self.image_p:i, self.is_train:False})
-            up_lrr = self.sess.run(self.recon_lrr, feed_dict={self.image_p:i.reshape(b, 32, 32, 3), self.is_train:False})
-            up_krr = self.sess.run(self.recon_krr, feed_dict={self.image_p:i.reshape(b, 32, 32, 3), self.is_train:False})
-
+        for batch_x, batch_y in self.next_batch(val_data, val_label, shuffle=False, self.batch_size):
+            b = batch_x.shape[0]
+            no = np.random.laplace(size=(b, 32, 32, 3))   
+            feed_dict = {}
+            feed_dict[self.image_p] = batch_x.reshape(b, 32, 32, 3)
+            feed_dict[self.is_train] = False
+            up_nn = self.sess.run(self.recon_nn, feed_dict=feed_dict)
+            up_lrr = self.sess.run(self.recon_lrr, feed_dict=feed_dict)
+            up_krr = self.sess.run(self.recon_krr, feed_dict=feed_dict)
             for k in range(len(up_nn)):
                 error_nn.append(mean_squared_error(i[k].flatten(), up_nn[k].flatten())) 
                 error_lrr.append(mean_squared_error(i[k].flatten(), up_lrr[k].flatten())) 
                 error_krr.append(mean_squared_error(i[k].flatten(), up_krr[k].flatten())) 
 
-        imsave('original.png', self.plot(i[0]))
-        imsave('nn_reco.png', self.plot(up_nn[0]))
-        imsave('lrr_reco.png', self.plot(up_lrr[0]))
-        imsave('krr_reco.png', self.plot(up_krr[0]))
-
-        #print('Average MSE among all testing images is {}'.format(np.mean(error)))
+        # If u want to save the reconstruction images:
+        #imsave('original.png', self.plot(i[0]))
+        #imsave('nn_reco.png', self.plot(up_nn[0]))
+        #imsave('lrr_reco.png', self.plot(up_lrr[0]))
+        #imsave('krr_reco.png', self.plot(up_krr[0]))
         return np.mean(error_nn), np.mean(error_lrr), np.mean(error_krr)
 
     def KRR_close_form(self, emb_matrix, train_matrix, train_mu):
@@ -782,162 +788,49 @@ class wrs:
 
     def get_emb_matrix(self): 
         count = 0
-        for i, j in self.next_batch(self.t_data, self.t_label, self.batch_size):
-            b = i.shape[0]
-            penal = np.array([[0.5,1] for i in range(b)])
-            no = np.random.normal(size=(128, 32, 32, 3))
-            uu, yy = self.sess.run([self.latent, self.kernel_map], feed_dict={self.image_p:i.reshape(b, 32, 32, 3), self.dropout:1, self.is_train:False})
-
+        for batch_x, batch_y in self.next_batch(self.t_data, self.t_label, False, self.batch_size):
+            b = batch_x.shape[0]
+            penal = np.array([[0.5, 1] for i in range(b)])
+            no = np.random.normal(size=(b, 32, 32, 3))
+            feed_dict = []
+            feed_dict[self.image_p] = batch_x.reshape(b, 32, 32, 3)
+            feed_dict[self.dropout] = 1.0
+            feed_dict[self.is_train] = False
+            compressing_representation, kernel_map = self.sess.run([self.latent, self.kernel_map], feed_dict=feed_dict)
             if count == 0 : 
-                emb_matrix_lrr = uu
-                emb_matrix_krr = yy 
+                emb_matrix_lrr = compressing_representation_concat
+                emb_matrix_krr = kernel_map
                 count+=1 
-
             else : 
-                emb_matrix_lrr = np.concatenate((emb_matrix_lrr, uu), axis=0)
-                emb_matrix_krr = np.concatenate((emb_matrix_krr, yy), axis=0)
+                emb_matrix_lrr = np.concatenate((emb_matrix_lrr, compressing_representation_concat), axis=0)
+                emb_matrix_krr = np.concatenate((emb_matrix_krr, kernel_map), axis=0)
                 count+=1 
-
-        print('Successfully')   
+        print('Successfully get embedding matrix')   
         return emb_matrix_lrr, emb_matrix_krr
 
 
     def get_train_matrix(self): 
         temp = []
-        print(len(self.t_data))
         for i in self.t_data:
             temp.append(i.flatten().reshape(1,-1)) 
         train_matrix = np.concatenate(temp, axis=0)
         print('Successfully get flatted train matrix !!!!')   
-        print(train_matrix.shape)
         return train_matrix
 
     def assign(self, train_matrix, train_mu, epo):
 
         feed_dict_assign = {}
-        tf.reset_default_graph()
-        self.build_model()
-        #self.assign_op += self.assign_each_part()
-        self.sess = tf.Session()
-        self.sess.run(tf.global_variables_initializer())
-        self.saver = tf.train.Saver(max_to_keep=5)
-
-        if epo != 0 : 
-            temp_c = [] 
-            c_file = np.load('multi_adv/theta_c.npy')
-            for i in range(len(c_file)): 
-                temp_c.append(tf.assign(self.theta_c[i], c_file[i]))
-
-            temp_g = [] 
-            g_file = np.load('multi_adv/theta_g.npy')
-            for i in range(len(g_file)): 
-                temp_g.append(tf.assign(self.theta_g[i], g_file[i]))
-
-            temp_r = [] 
-            r_file = np.load('multi_adv/theta_r.npy')
-            for i in range(len(r_file)): 
-                temp_r.append(tf.assign(self.theta_r_nn[i], r_file[i]))
-
-
-            self.sess.run([temp_c, temp_g, temp_r])
-
-        if epo == 0 : 
-            #np.save('multi_adv/theta_g.npy', self.sess.run(self.theta_g))
-            self.save_g()
-
         emb_matrix_lrr, emb_matrix_krr = self.get_emb_matrix()
-
-        start = time.time()
-        gamma, seed, mapping_dim = self.tune(train_matrix, emb_matrix_lrr)
-        end = time.time()
-
-        print('Time for tuning the RFF parameters: {}.'.format(end-start))
-
-        train_data = []
-        train_label = []
-        for i , j , q , k , aug in self.t_next_batch(self.t_data, self.t_label, self.batch_size):
-            cur_lr = 0.001
-            if aug != 3 : 
-                if self.arg.cut_out :
-                    l = []
-                    for qq in i : 
-                        l.append(self.cutout(qq,1,20))
-                    feed_dict = {self.image_p:np.array(l).reshape(-1,32,32,3), self.label_p:j, self.is_train:True, self.dropout:0.4, self.learning_rate_p:cur_lr}
-                else:
-                    feed_dict = {self.image_p:i.reshape(-1,32,32,3), self.label_p:j, self.is_train:True, self.dropout:0.4, self.learning_rate_p:cur_lr}
-            else :
-                if self.arg.cut_out:
-                    l = []
-                    for qq in i : 
-                        l.append(self.cutout(qq,1,20))
-                    feed_dict = {self.image_p:np.array(l).reshape(-1,32,32,3), self.label_p:j, self.is_train:True, self.dropout:0.4, self.learning_rate_p:cur_lr}
-                else : 
-                    feed_dict = {self.image_p:i.reshape(-1,32,32,3), self.label_p:j, self.is_train:True, self.dropout:0.4, self.learning_rate_p:cur_lr}
-
-            train_data.append(i.reshape(-1, 32, 32,3 ))
-            train_label.append(j)
-            citers = 5
-            for _ in range(citers):
-                _ = self.sess.run(self.r_opt,feed_dict=feed_dict)
-            _ , lo , ac = self.sess.run([self.c_opt,self.loss_c,self.acc],feed_dict=feed_dict)
-
-        np.save('multi_adv/theta_c.npy', self.sess.run(self.theta_c))
-        np.save('multi_adv/theta_r.npy', self.sess.run(self.theta_r_nn))
-
-        tf.reset_default_graph()
-        self.gamma = gamma
-        self.seed = seed
-        self.mapping_dim = mapping_dim
-        self.lr = self.g_op_nn._lr
-
-        self.build_model()
-
-        #self.assign_op += self.assign_each_part()
-        self.sess = tf.Session()
-        self.sess.run(tf.global_variables_initializer())
-        self.saver = tf.train.Saver(max_to_keep=5)
-
-        #if epo != 0 : 
-        temp_c = [] 
-        c_file = np.load('multi_adv/theta_c.npy')
-        for i in range(len(c_file)): 
-            temp_c.append(tf.assign(self.theta_c[i], c_file[i]))
-
-        temp_g = self.load_g()
-
-        temp_r = [] 
-        r_file = np.load('multi_adv/theta_r.npy')
-        for i in range(len(r_file)): 
-            temp_r.append(tf.assign(self.theta_r_nn[i], r_file[i]))
-
-        self.sess.run([temp_c, temp_g, temp_r])
-
-        emb_matrix_lrr, emb_matrix_krr = self.get_emb_matrix()
-
         error_list = []
         update_choice = [self.g_opt_nn, self.g_opt_lrr, self.g_opt_krr]
         assign_op = []
-
         lrr_weights, lrr_mu = self.LRR_close_form(emb_matrix_lrr, train_matrix, train_mu)
-        #assign_op.append(tf.assign(self.theta_r_lrr[0], lrr_weights))
-        #print(assign_op)
         feed_dict_assign[self.lrr_mu_p] = lrr_mu
         feed_dict_assign[self.lrr_weights] = lrr_weights
-
         krr_weights, krr_mu = self.KRR_close_form(emb_matrix_krr, train_matrix, train_mu)
-
         feed_dict_assign[self.krr_mu_p] = krr_mu
         feed_dict_assign[self.krr_weights] = krr_weights
         feed_dict_assign[self.t_mu_p] = train_mu
-
-        #assign_op.append(tf.assign(self.theta_r_krr[0], krr_weights))
-
-        #assign_op.append(tf.assign(self.lrr_mu, lrr_mu))
-        #assign_op.append(tf.assign(self.krr_mu, krr_mu))
-        #assign_op.append(tf.assign(self.t_mu, train_mu))
-
-        #self.sess.run(assign_op)
-
         self.sess.run(self.assign_op, feed_dict = feed_dict_assign)
 
         error_nn, error_lrr, error_krr = self.compute_reco_mse(self.v_data, self.v_label)
@@ -946,9 +839,182 @@ class wrs:
         error_list.append(error_krr)
         print('Average MSE among all testing images is {}, {}, {}.(nn,lrr,krr)'.format(error_nn, error_lrr, error_krr))
         optimize_g = update_choice[np.argmin(error_list)]
-        return optimize_g, feed_dict_assign, train_data, train_label
+        return optimize_g, feed_dict_assign
+
+    #### this training process may have some problems, see updata cosine learning rate and we do not need drop out ? 
+    def train(self):
+        loss_trace = []
+        epochs = 160
+        init_lr = 0.01
+        cur_lr = init_lr
+        is_best = 0
+        train_matrix = self.get_train_matrix()
+        train_mu = np.mean(train_matrix, axis=0)
+        ### original inner loops for citers is 5 !!!! 
+        ### have tried loops 15 ...
+        for epo in range(self.arg.epoch) : 
+            train_data = []
+            train_label = [] 
+            start_epo = time.time()
+            for batch_x, batch_y in self.next_batch(self.t_data, self.t_label, True, self.args.batch):
+                train_data.append(batch_x)
+                train_label.append(batch_y)
+                feed_dict = {}
+                b = batch_x.shape[0]
+                no = np.random.normal(size=(b, 32, 32, 3))
+                feed_dict[self.image_p] = batch_x.reshape(-1, 32, 32, 3)
+                feed_dict[self.label_p] = batch_y
+                feed_dict[self.is_train] = True
+                feed_dict[self.dropout] = 0.4
+                feed_dict[self.learning_rate_p] = cur_lr
+                if self.arg.cut_out :
+                    l = []
+                    for qq in i : 
+                        l.append(self.cutout(qq, 1, 20))
+                    feed_dict[self.image_p] = np.array(l).reshape(-1, 32, 32, 3)
+                # ***********************************
+                # Update Reconstructor and Classifier
+                # ***********************************
+                for _ in range(self.arg.citer):
+                    _ = self.sess.run(self.r_opt, feed_dict = feed_dict)
+                c_loss, _ = self.sess.run([self.loss_c, self.c_opt], feed_dict = feed_dict)
+            
+
+            optimize_g, feed_dict = self.assign(train_matrix, train_mu, epo)
+            start_g = time.time()
+            for ind in range(len(train_data)):
+                feed_dict[self.image_p] = train_data[ind]
+                feed_dict[self.label_p] = train_label[ind]
+                feed_dict[self.is_train] = True 
+                feed_dict[self.dropout] = 0.4
+                feed_dict[self.learning_rate_p] = cur_lr
+                # *****************
+                # Update Privatizer
+                # ***************** 
+                _ = self.sess.run(optimize_g,feed_dict = feed_dict)
+            end = time.time()
+            self.save_g()
+            print("Training for privatizer costs about {}.".format(end-start_g))
+            if epo < 80 :
+                cur_lr = 0.01
+
+            elif epo > 80 and epo < 120 : 
+                cur_lr = 0.0001
+            else : 
+                cur_lr = 0.00001
+            acc_testing = self.compute_acc(self.te_data, self.te_label)#, is_train=True)
+            acc_validation = self.compute_acc(self.v_data, self.v_label)
+            print('Epoch [{}/{}], cost {} sec, validation acc {}'.format(epo+1, self.arg.epoch, end-start_epo, 
+                                                                                         acc_validation))
+            print("Validation accuracy: {}, testing accuracy: {}.".format(ac_acc, at_acc))
+            if acc_validation > is_best:
+                is_best = acc_validation
+                self.saver.save(self.sess, os.path.join(self.arg.model_dir, self.arg.name+"_ckpt_best"))
+                self.save_g()
+            if (epo+1) % 10 == 0:
+                self.saver.save(self.sess, os.path.join(self.arg.model_dir, self.arg.name+"_ckpt_"+str(epo+1)))
+                self.plot_10slot()      
+
+    def save_g(self):
+        temp = self.sess.run(self.theta_g)
+        weight = []
+        for i in range(len(temp)):
+            weight.append(temp[i].flatten())
+        np.save(os.path.join(self.arg.model_dir, self.arg.name+"_weights.npy"), weight)
+
+    def load_g(self):
+        temp = np.load(os.path.join(self.arg.model_dir, self.arg.name+"_weights.npy"))
+        assign = []
+        for i in range(len(self.theta_g)):
+            if temp[i].shape[0] > 3 :
+                assign.append(tf.assign(self.theta_g[i],temp[i].reshape(3,3,3,3)))
+            else : 
+                assign.append(tf.assign(self.theta_g[i],temp[i]))
+        return assign
+
+    def plot(self,x):
+        x = x - np.min(x)
+        x = x / np.max(x)
+        x *= 255  
+        x= x.astype(np.uint8)
+        x = x.reshape(32, 32, 3)
+        return x 
+
+    def plot_10slot(self, name="Reconsturcted_images.png"):
+
+        random_sample_img = np.array(self.te_data[:128])
+        random_sample_label = np.array([i for i in range(128)])
+        no = np.random.normal(size=(128, 32, 32, 3))
+        compress_representations = self.sess.run(self.latent, feed_dict={
+                                                                        self.image_p:random_sample_img.reshape(128, 175, 175,3), 
+                                                                        self.label_p:random_sample_label, 
+                                                                        self.noise_p:no, 
+                                                                        self.keep_prob:1})
+        reconstructions = self.sess.run(self.up, feed_dict={self.latent_no:compress_representations})
+
+        plt.figure(figsize=(10, 2))
+        n = 10
+        for i in range(n):
+            ax = plt.subplot(2, n, i + 1)
+            plt.imshow(self.plot(self.te_data[i]))
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
+
+            # display reconstruction
+            ax = plt.subplot(2, n, i + 1 + n)
+            plt.imshow(self.plot(reconstructions[i]))
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
+        plt.savefig(os.path.join(self.arg.model_dir, name))
+
+    def _update_learning_rate_cosine(self, global_step, num_iterations):
+        """
+        update current learning rate, using Cosine function without restart(Loshchilov & Hutter, 2016).
+        """
+        global_step = min(global_step, num_iterations)
+        decay_step = num_iterations
+        alpha = 0
+        cosine_decay = 0.5 * (1 + math.cos(math.pi * global_step / decay_step))
+        decayed = (1 - alpha) * cosine_decay + alpha
+        new_learning_rate = self.init_learning_rate * decayed
+        self.op._lr = new_learning_rate
+        #self.curr_learning_rate = new_learning_rate
+
+    def test(self):
+        #self.saver.restore(self.sess,'cpgan_log/model_141') #Our manuscript may use it!
+        self.saver.restore(self.sess, os.path.join(self.arg.model_dir, self.arg.name+"_ckpt_best"))
+        print('successfully restore')
+        ac_acc = self.compute_acc(self.te_data, self.te_label)
+        print('Testing utility accuracy is {}.'.format(ac_acc))
+
+    def count_number_trainable_params(self, variable_scope):
+        """
+        Counts the number of trainable variables.
+        """
+        tot_nb_params = 0
+        for trainable_variable in variable_scope:
+            shape = trainable_variable.get_shape() # e.g [D,F] or [W,H,C]
+            #print(shape)
+            current_nb_params = self.get_nb_params_shape(shape)
+            tot_nb_params = tot_nb_params + current_nb_params
+        return tot_nb_params
+
+    def get_nb_params_shape(self, shape):
+        '''
+        Computes the total number of params for a given shap.
+        Works for any number of shapes etc [D,F] or [W,H,C] computes D*F and W*H*C.
+        '''
+        nb_params = 1
+        for dim in shape:
+            nb_params = nb_params*int(dim)
+        return nb_params 
 
 
+
+    # **********************************************
+    # Below function is no longer used, since tuning the best kernel parameter for each epoch is too intractable, and it 
+    # can not lead to better performance in our experiments. So we directly drop it! 
+    # **********************************************
     def sklearn_sol(self, train_matrix, val_matrix, emb_matrix, emb_matrix_te, gamma ,mapping_dim, seed): 
 
         rbf_feature = RBFSampler(gamma=gamma, n_components=mapping_dim, random_state=seed)
@@ -979,9 +1045,7 @@ class wrs:
         mse_trace = []
         for i in range(len(self.v_data)):
             mse_trace.append(mean_squared_error(val_matrix[i].flatten(), pred[i]))
-        
         return np.mean(mse_trace)
-
 
     def tune(self, train_matrix, emb_matrix):
         ### This is for tune the parameter for each iteration (Not useful).
@@ -1044,226 +1108,6 @@ class wrs:
         mapping_dim = dimension_record[index]
 
         return gamma, seed, mapping_dim
-
-    #### this training process may have some problems, see updata cosine learning rate and we do not need drop out ? 
-    def train(self):
-        loss_trace = []
-        epochs = 160
-        count = 0
-        init_lr = 0.01
-        cur_lr = init_lr
-
-        train_matrix = self.get_train_matrix()
-        train_mu = np.mean(train_matrix, axis=0)
-
-
-        #update_choice = [self.g_opt_nn, self.g_opt_lrr, self.g_opt_krr]
-
-        ### original inner loops for citers is 5 !!!! 
-        ### have tried loops 15 ...
-
-        citers = 5
-
-        for epo in range(self.arg.epoch) : 
-            train_data = []
-            train_label = [] 
-            start = time.time()
-            for batch_x, batch_y in self.next_batch(self.t_data, self.t_label):
-                feed_dict = {}
-                b = batch_x.shape[0]
-                no = np.random.normal(size=(b, 32, 32, 3))
-                feed_dict[self.image_p] = batch_x.reshape(-1, 32, 32, 3)
-                feed_dict[self.label_p] = batch_y
-                feed_dict[self.is_train] = True
-                feed_dict[self.dropout] = 0.4
-                feed_dict[self.learning_rate_p] = cur_lr
-                if self.arg.cut_out :
-                    l = []
-                    for qq in i : 
-                        l.append(self.cutout(qq, 1, 20))
-                    feed_dict[self.image_p] = np.array(l).reshape(-1, 32, 32, 3)
-
-                for _ in range(self.arg.citer):
-                    _ = self.sess.run(self.r_opt, feed_dict = feed_dict)
-                c_loss, _ = self.sess.run([self.loss_c, self.c_opt], feed_dict = feed_dict)
-                
-            optimize_g, feed_dict, train_data, train_label = self.assign(train_matrix, train_mu, epo)
-            for ind in range(len(train_data)):
-                feed_dict[self.image_p] = train_data[ind]
-                feed_dict[self.label_p] = train_label[ind]
-                feed_dict[self.is_train] = True 
-                feed_dict[self.dropout] = 0.4
-                feed_dict[self.learning_rate_p] = cur_lr
-                ### update G 
-                for _ in range(1):
-                    _ = self.sess.run(optimize_g,feed_dict = feed_dict)
-
-            self.save_g()
-            end = time.time()
-            print("Training for G costs about {}.".format(end-start))
-
-            if count < 80 :
-                cur_lr = 0.01
-
-            elif count > 80 and count < 120 : 
-                cur_lr = 0.0001
-
-            else : 
-                cur_lr = 0.00001
-
-            count +=1
-            at_acc = self.compute_acc(self.te_data, self.te_label)#, is_train=True)
-            ac_acc = self.compute_acc(self.v_data, self.v_label)
-            print("Validation accuracy: {}, testing accuracy: {}.".format(ac_acc, at_acc))
-            if epo %10 == 0:
-                self.saver.save(self.sess,'model_'+str(epo+1))
-                self.save_g()
-            #print('Epochs {}, Testing accuracy:{}'.format(epo+1,ac_acc))
-
-
-    def save_g(self):
-        
-        temp = self.sess.run(self.theta_g)
-        a = []
-        for i in range(len(temp)):
-            a.append(temp[i].flatten())
-        np.save('multi_adv/theta_g.npy',a)
-
-    def load_g(self):
-        temp = np.load('multi_adv/theta_g.npy')
-        assign = []
-        for i in range(len(self.theta_g)):
-            if temp[i].shape[0] > 3 :
-                assign.append(tf.assign(self.theta_g[i],temp[i].reshape(3,3,3,3)))
-            else : 
-                assign.append(tf.assign(self.theta_g[i],temp[i]))
-
-        return assign
-
-    def plot(self,x):
-        x = x - np.min(x)
-        x = x / np.max(x)
-        x *= 255  
-        x= x.astype(np.uint8)
-        x = x.reshape(32,32,3)
-        return x 
-
-    def plot_10slot(self,name):
-
-        j = np.array(self.te_data[:128])
-
-        k = np.array([i for i in range(128)])
-
-        no = np.random.normal(size=(128, 32, 32, 3))
-
-        uu = self.sess.run(self.x, feed_dict={self.image_p:j.reshape(128, 32, 32, 3),self.dropout:1, self.label_p:k, self.is_train:False})
-
-        yy = self.sess.run(self.up, feed_dict={self.x:uu, self.is_train:False, self.dropout:1})
-
-        plt.figure(figsize=(10, 2))
-
-        n = 10
-
-        for i in range(n):
-
-            ax = plt.subplot(2, n, i + 1)
-
-            plt.imshow(self.plot(self.te_data[i]))
-
-            ax.get_xaxis().set_visible(False)
-
-            ax.get_yaxis().set_visible(False)
-
-            # display reconstruction
-
-            ax = plt.subplot(2, n, i + 1 + n)
-
-            plt.imshow(self.plot(yy[i]))
-
-            ax.get_xaxis().set_visible(False)
-
-            ax.get_yaxis().set_visible(False)
-           
-        plt.savefig('normal_log/reconstructed_image'+str(name))
-
-    def _update_learning_rate_cosine(self, global_step, num_iterations):
-        """
-        update current learning rate, using Cosine function without restart(Loshchilov & Hutter, 2016).
-        """
-        global_step = min(global_step, num_iterations)
-        decay_step = num_iterations
-        alpha = 0
-        cosine_decay = 0.5 * (1 + math.cos(math.pi * global_step / decay_step))
-        decayed = (1 - alpha) * cosine_decay + alpha
-        new_learning_rate = self.init_learning_rate * decayed
-        self.op._lr = new_learning_rate
-        #self.curr_learning_rate = new_learning_rate
-
-    def test(self):
-        #self.saver.restore(self.sess,'cpgan_log/model_141')
-        self.saver.restore(self.sess,self.arg.model_path)
-        print('successfully restore')
-        ac_acc = self.compute_acc(self.te_data,self.te_label)
-        print('Testing utility accuracy is {}.'.format(ac_acc))
-        a = []
-        for i in self.theta_g:
-            a.append(self.sess.run(i).flatten())
-
-        #ac_acc = self.compute_acc(self.te_data,self.te_label)
-        #print(ac_acc)
-        #for j , k in self.next_batch(self.te_data,te_label):
-        #print(len(self.sess.run(self.theta_g)))
-
-        #a = [n.name for n in tf.get_default_graph().as_graph_def().node]
-        #print(a)
-        '''
-        for i in a : 
-            if i == 'utility_classifier/logits/':
-                temp = 
-        '''
-        #temp = self.sess.run(self.theta_g)
-        #a = []
-        #for i in range(len(temp)):
-        #    a.append(temp[i].flatten())
-        '''
-        for i in range(len(a)):
-            print(a[i].shape)
-        '''
-        #np.save('svhn_log/theta_g.npy',a)
-        #np.save('cpgan_log/theta_g.npy',self.sess.run(self.theta_g))
-
-    def count_number_trainable_params(self, variable_scope):
-        """
-        Counts the number of trainable variables.
-        """
-        tot_nb_params = 0
-        for trainable_variable in variable_scope:
-            shape = trainable_variable.get_shape() # e.g [D,F] or [W,H,C]
-            #print(shape)
-            current_nb_params = self.get_nb_params_shape(shape)
-            tot_nb_params = tot_nb_params + current_nb_params
-        return tot_nb_params
-
-    #def count_operation(self, shape):
-    #    k , l = shape
-
-    def get_nb_params_shape(self, shape):
-        '''
-        Computes the total number of params for a given shap.
-        Works for any number of shapes etc [D,F] or [W,H,C] computes D*F and W*H*C.
-        '''
-        nb_params = 1
-        for dim in shape:
-            nb_params = nb_params*int(dim)
-        return nb_params 
-
-
-
-
-
-
-
-
 
 
 
