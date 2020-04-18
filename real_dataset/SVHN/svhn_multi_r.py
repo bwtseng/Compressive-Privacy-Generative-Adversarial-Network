@@ -21,6 +21,8 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
 plt.switch_backend('agg')
+
+# Old version!!!!! Only for reference!
 class wrs:
     def __init__(self,arg):
 
