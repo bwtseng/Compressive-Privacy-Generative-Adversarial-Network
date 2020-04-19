@@ -15,7 +15,7 @@ if __name__ == '__main__':
     parser.add_argument('--com_dim', type=int, default=2, help='Compressive dimension')
 	parser.add_argument('--noise', default=False, action='store_true', help='Whether adding noise or not')
 	parser.add_argument('--batch_size', '-b', type=int, default=1024, help='Batch_size')
-	parser.add_argument('--citer', type=int, default=5, help='Adversary iteration')
+	parser.add_argument('--citer', type=int, default=25, help='Adversary iteration')
 	parser.add_argument('--gamma', type=float, default=1, help='Variance of the kernel function')
 	parser.add_argument('--seed', type=int, default=1, help='The sampled weights of the RFF mapping')
 	parser.add_argument('--mapping_dim', type=int, default=5000, help='Dimension of the intrinsic space')
