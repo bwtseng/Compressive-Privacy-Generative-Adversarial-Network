@@ -40,8 +40,8 @@
 # Execution 
 
 ```
-python main_cifar_cpgan.py --train True --data_dir "Your Path" --label_dir "Your path""
+python main_svhn.py --train True --data_dir "Your Path" --label_dir "Your path"
 ```
 
-The rest of the argument are not listed here, if you want to tune the parameters, please refer to the the file, which start with "main".
+The rest of the argument are not listed here, if you want to tune the parameters, please refer to our released code, in which the file name starts with "main".
 

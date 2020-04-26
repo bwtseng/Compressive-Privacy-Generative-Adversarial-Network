@@ -60,4 +60,4 @@ python main_multiple_celeba.py --train True --data_dir "Your Path" --label_dir "
 python main_single_celeba.py --train True --data_dir "Your Path" --label_dir "Your path"
 ```
 
-The rest of the argument are not listed here, if you want to try different parameters, please refer to the the files, in which the name start with "main".
+The rest of the argument are not listed here, if you want to try different parameters, please refer to our released code, in which the file name starts with "main".
