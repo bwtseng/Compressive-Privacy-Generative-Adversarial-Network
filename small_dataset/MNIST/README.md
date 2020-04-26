@@ -10,6 +10,7 @@
 ## Empirical Results
 - Trade-off between privacy and utility
     <center> <img src="img/MNIST_data_final_nonlinear.png" width="400" height="250"> </center>
+    
 We also provide the experimental records for these mechanisms, which are csv format file under the numberical-file folder. Each file records the MSE and accuracy with different trade-off parameters. Regarding to this paramters, please refer to our manuscript for more detail.
 
 ## Execution

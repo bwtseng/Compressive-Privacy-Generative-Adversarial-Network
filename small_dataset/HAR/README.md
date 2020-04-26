@@ -11,7 +11,7 @@
 - Trade-off between privacy and utility
     <center> <img src="img/HAR_data_final_nonlinear.png" width="400" height="250"> </center>
 
-- Neural network is not always the most intrusive adversary, confirmed by the following two figures. Note that top figure is DNN method and bottom one is DNN (Resize) method, respectively.
+- Neural network is not always the most intrusive adversary, confirmed by the following two figures. Note that left figure is DNN method and the right one is DNN (Resize) method, respectively.
     <center> <img src="img/mse_comparison_har_dnn.png" width="400" height="250"> </center>
     <center> <img src="img/mse_comparison_har_pca.png" width="400" height="250"> </center>
 We also provide the experimental records for these mechanisms, which are csv format file under the numberical-file folder. Each file records the MSE and accuracy with different trade-off parameters. Regarding to this paramters, please refer to our manuscript for more detail.

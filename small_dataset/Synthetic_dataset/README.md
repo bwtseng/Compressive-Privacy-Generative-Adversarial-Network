@@ -11,8 +11,10 @@
 ## **Empirical Results**
 - Trade-off between privacy and utility
     <center> <img src="img/Synthetic_data_final.png" width="400" height="250"> </center>
+
 - Our CPGAN achieves the result, which is abe approximate to the theorectical optimum.
     <center> <img src="img/Final_theory.png" width="400" height="250"> </center>
+    
 ## **Execution**
 ```
 python main_gd.py --train True
